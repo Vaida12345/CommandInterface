@@ -38,7 +38,7 @@ public extension CommandInterface {
     
     /// Link to the interface for interacting with printing to stdout.
     ///
-    /// The ``CommandPrintManager/callAsFunction(_:separator:terminator:modifier:)`` is recommended.
+    /// The ``print(_:separator:terminator:modifier:)`` is recommended.
     var print: CommandPrintManager {
         CommandPrintManager()
     }

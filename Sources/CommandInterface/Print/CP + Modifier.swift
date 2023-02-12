@@ -112,12 +112,12 @@ extension CommandPrintManager {
             self.union(.strikethrough)
         }
         
-        /// Sets the foreground color.
+        /// Sets the text color.
         public func foregroundColor(_ color: Color) -> Modifier {
             Modifier(rawValue: self.rawValue, foregroundColor: color, backgroundColor: self.backgroundColor)
         }
         
-        /// Sets the background color.
+        /// Sets the text background color.
         public func backgroundColor(_ color: Color) -> Modifier {
             Modifier(rawValue: self.rawValue, foregroundColor: self.foregroundColor, backgroundColor: color)
         }
