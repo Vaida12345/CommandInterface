@@ -199,6 +199,29 @@ public struct CommandReadManager<Content> {
                     continue
                 }
             }
+            
+#if canImport(Support)
+        case .finderItem:
+            Swift.print(prompt, terminator: ":\n")
+            
+            while result == nil {
+                guard let read = Swift.readLine() else {
+                    CommandOutputManager().bell()
+                    Swift.print("\u{1B}[31mTry again\u{1B}[0m: ", terminator: "")
+                    continue
+                }
+                let item = FinderItem(shellPath: read)
+                
+                do {
+                    let condition = try condition?(item as! Content)
+                    guard condition ?? true else { throw ReadError(reason: "A unknown condition not met.") }
+                    result = item as? Content
+                } catch {
+                    __reportingError(error: error)
+                    continue
+                }
+            }
+#endif
         }
         
         return result!

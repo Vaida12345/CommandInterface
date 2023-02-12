@@ -7,6 +7,11 @@
 //
 
 
+#if canImport(Support)
+import Support
+#endif
+
+
 /// A protocol indicating its `Content` is readable from stdin.
 public protocol CommandReadable {
     
@@ -33,6 +38,10 @@ public struct CommandReadableContent<Content>: CommandReadable {
     
     public static var double: CommandReadableContent<Double> { .init(contentKey: .double) }
     
+#if canImport(Support)
+    public static var finderItem: CommandReadableContent<FinderItem> { .init(contentKey: .finderItem) }
+#endif
+    
     private init(contentKey: ContentKey) {
         self.contentKey = contentKey
     }
@@ -44,6 +53,9 @@ public struct CommandReadableContent<Content>: CommandReadable {
         case string
         case int
         case double
+#if canImport(Support)
+        case finderItem
+#endif
     }
     
 }
