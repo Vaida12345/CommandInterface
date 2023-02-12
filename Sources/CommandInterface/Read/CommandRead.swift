@@ -55,6 +55,36 @@ public struct CommandReadManager<Content> {
         Swift.print("\u{1B}[31mTry again\u{1B}[0m: ", terminator: "")
     }
     
+    private func __normalize(filePath: String) -> String {
+        (filePath.hasSuffix(" ") ? String(filePath.dropLast()) : filePath)
+            .replacingOccurrences(of: "\\ ", with: " ")
+            .replacingOccurrences(of: "\\(", with: "(")
+            .replacingOccurrences(of: "\\)", with: ")")
+            .replacingOccurrences(of: "\\[", with: "[")
+            .replacingOccurrences(of: "\\]", with: "]")
+            .replacingOccurrences(of: "\\{", with: "{")
+            .replacingOccurrences(of: "\\}", with: "}")
+            .replacingOccurrences(of: "\\`", with: "`")
+            .replacingOccurrences(of: "\\~", with: "~")
+            .replacingOccurrences(of: "\\!", with: "!")
+            .replacingOccurrences(of: "\\@", with: "@")
+            .replacingOccurrences(of: "\\#", with: "#")
+            .replacingOccurrences(of: "\\$", with: "$")
+            .replacingOccurrences(of: "\\%", with: "%")
+            .replacingOccurrences(of: "\\&", with: "&")
+            .replacingOccurrences(of: "\\*", with: "*")
+            .replacingOccurrences(of: "\\=", with: "=")
+            .replacingOccurrences(of: "\\|", with: "|")
+            .replacingOccurrences(of: "\\;", with: ";")
+            .replacingOccurrences(of: "\\\"", with: "\"")
+            .replacingOccurrences(of: "\\\'", with: "\'")
+            .replacingOccurrences(of: "\\<", with: "<")
+            .replacingOccurrences(of: "\\>", with: ">")
+            .replacingOccurrences(of: "\\,", with: ",")
+            .replacingOccurrences(of: "\\?", with: "?")
+            .replacingOccurrences(of: "\\\\", with: "\\")
+    }
+    
     /// Gets the value. This is guaranteed, as it would keep asking the user for correct input.
     public func get() -> Content {
         var result: Content? = nil
@@ -90,34 +120,7 @@ public struct CommandReadManager<Content> {
                     Swift.print("\u{1B}[31mTry again\u{1B}[0m: ", terminator: "")
                     continue
                 }
-                
-                let filePath = (read.hasSuffix(" ") ? String(read.dropLast()) : read)
-                    .replacingOccurrences(of: "\\ ", with: " ")
-                    .replacingOccurrences(of: "\\(", with: "(")
-                    .replacingOccurrences(of: "\\)", with: ")")
-                    .replacingOccurrences(of: "\\[", with: "[")
-                    .replacingOccurrences(of: "\\]", with: "]")
-                    .replacingOccurrences(of: "\\{", with: "{")
-                    .replacingOccurrences(of: "\\}", with: "}")
-                    .replacingOccurrences(of: "\\`", with: "`")
-                    .replacingOccurrences(of: "\\~", with: "~")
-                    .replacingOccurrences(of: "\\!", with: "!")
-                    .replacingOccurrences(of: "\\@", with: "@")
-                    .replacingOccurrences(of: "\\#", with: "#")
-                    .replacingOccurrences(of: "\\$", with: "$")
-                    .replacingOccurrences(of: "\\%", with: "%")
-                    .replacingOccurrences(of: "\\&", with: "&")
-                    .replacingOccurrences(of: "\\*", with: "*")
-                    .replacingOccurrences(of: "\\=", with: "=")
-                    .replacingOccurrences(of: "\\|", with: "|")
-                    .replacingOccurrences(of: "\\;", with: ";")
-                    .replacingOccurrences(of: "\\\"", with: "\"")
-                    .replacingOccurrences(of: "\\\'", with: "\'")
-                    .replacingOccurrences(of: "\\<", with: "<")
-                    .replacingOccurrences(of: "\\>", with: ">")
-                    .replacingOccurrences(of: "\\,", with: ",")
-                    .replacingOccurrences(of: "\\?", with: "?")
-                    .replacingOccurrences(of: "\\\\", with: "\\")
+                let filePath = __normalize(filePath: read)
                 
                 do {
                     let text = try String(contentsOfFile: filePath)
@@ -139,34 +142,7 @@ public struct CommandReadManager<Content> {
                     Swift.print("\u{1B}[31mTry again\u{1B}[0m: ", terminator: "")
                     continue
                 }
-                
-                let filePath = (read.hasSuffix(" ") ? String(read.dropLast()) : read)
-                    .replacingOccurrences(of: "\\ ", with: " ")
-                    .replacingOccurrences(of: "\\(", with: "(")
-                    .replacingOccurrences(of: "\\)", with: ")")
-                    .replacingOccurrences(of: "\\[", with: "[")
-                    .replacingOccurrences(of: "\\]", with: "]")
-                    .replacingOccurrences(of: "\\{", with: "{")
-                    .replacingOccurrences(of: "\\}", with: "}")
-                    .replacingOccurrences(of: "\\`", with: "`")
-                    .replacingOccurrences(of: "\\~", with: "~")
-                    .replacingOccurrences(of: "\\!", with: "!")
-                    .replacingOccurrences(of: "\\@", with: "@")
-                    .replacingOccurrences(of: "\\#", with: "#")
-                    .replacingOccurrences(of: "\\$", with: "$")
-                    .replacingOccurrences(of: "\\%", with: "%")
-                    .replacingOccurrences(of: "\\&", with: "&")
-                    .replacingOccurrences(of: "\\*", with: "*")
-                    .replacingOccurrences(of: "\\=", with: "=")
-                    .replacingOccurrences(of: "\\|", with: "|")
-                    .replacingOccurrences(of: "\\;", with: ";")
-                    .replacingOccurrences(of: "\\\"", with: "\"")
-                    .replacingOccurrences(of: "\\\'", with: "\'")
-                    .replacingOccurrences(of: "\\<", with: "<")
-                    .replacingOccurrences(of: "\\>", with: ">")
-                    .replacingOccurrences(of: "\\,", with: ",")
-                    .replacingOccurrences(of: "\\?", with: "?")
-                    .replacingOccurrences(of: "\\\\", with: "\\")
+                let filePath = __normalize(filePath: read)
                 
                 do {
                     let condition = try condition?(filePath as! Content)
