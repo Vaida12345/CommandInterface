@@ -252,9 +252,9 @@ public struct CommandReadManager<Content> {
 /// The error with a reason for the failure of reading.
 public struct ReadError: LocalizedError {
     
-    let reason: String
+    fileprivate let reason: String
     
-    var errorDescription: String {
+    public var errorDescription: String {
         self.reason
     }
     

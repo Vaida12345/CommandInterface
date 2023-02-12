@@ -19,7 +19,7 @@ extension CommandPrintManager {
         
         private var backgroundColor: Color
         
-        internal var escaper: String {
+        private var escaper: String {
             var lhs: Set<Int> = []
             for shift in 0...7 {
                 if (self.contains(Modifier(rawValue: 1 << shift))) {

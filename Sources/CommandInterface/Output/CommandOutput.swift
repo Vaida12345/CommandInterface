@@ -17,7 +17,7 @@ public struct CommandOutputManager {
     ///
     /// // no output, the terminal would flash to indicate error.
     /// ```
-    func bell() {
+    public func bell() {
         print("\u{7}", terminator: "")
     }
     
@@ -32,12 +32,12 @@ public struct CommandOutputManager {
     ///
     /// // output is 123.
     /// ```
-    func carriageReturn() {
+    public func carriageReturn() {
         print("\u{13}", terminator: "")
     }
     
     /// Erase entire screen.
-    func clear() {
+    public func clear() {
         print("\u{001B}[2J", terminator: "")
     }
     
