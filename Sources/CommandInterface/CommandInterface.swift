@@ -61,8 +61,7 @@ public extension CommandInterface {
         let body = items.map(String.init(describing:)).joined(separator: separator)
         
         if let modifier = modifier?(CommandPrintManager.Modifier.default) {
-            let escapers = modifier.escaper
-            Swift.print("\u{1B}[\(escapers)m" + body + "\u{1B}[0m", terminator: terminator)
+            Swift.print(modifier.modify(body), terminator: terminator)
         } else {
             Swift.print(body, terminator: terminator)
         }

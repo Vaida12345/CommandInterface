@@ -131,6 +131,10 @@ extension CommandPrintManager {
             other.rawValue & self.rawValue == other.rawValue
         }
         
+        internal func modify(_ content: String) -> String {
+            let escapers = self.escaper
+            return "\u{1B}[\(escapers)m" + content + "\u{1B}[0m"
+        }
         
         private init(rawValue: UInt8, foregroundColor: Color = .none, backgroundColor: Color = .none) {
             self.rawValue = rawValue

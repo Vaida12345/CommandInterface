@@ -17,6 +17,8 @@ public struct CommandReadManager<Content> {
     
     private let condition: ((_ content: Content) throws -> Bool)?
     
+    private let promptModifier: ((_ content: CommandPrintManager.Modifier) -> CommandPrintManager.Modifier)?
+    
     private var contentKey: CommandReadableContent<Content>.ContentKey
     
     
@@ -43,7 +45,12 @@ public struct CommandReadManager<Content> {
     ///     .get()
     /// ```
     public func condition(_ predicate: @escaping (_ content: Content) throws -> Bool) -> CommandReadManager {
-        CommandReadManager(prompt: self.prompt, condition: predicate, contentKey: self.contentKey)
+        CommandReadManager(prompt: self.prompt, condition: predicate, promptModifier: self.promptModifier, contentKey: self.contentKey)
+    }
+    
+    /// The style modifier to the prompt.
+    public func promptModifier(_ modifier: @escaping (_ content: CommandPrintManager.Modifier) -> CommandPrintManager.Modifier) -> CommandReadManager {
+        CommandReadManager(prompt: self.prompt, condition: self.condition, promptModifier: modifier, contentKey: self.contentKey)
     }
     
     private func __reportingError(error: some Error) {
@@ -85,13 +92,18 @@ public struct CommandReadManager<Content> {
             .replacingOccurrences(of: "\\\\", with: "\\")
     }
     
+    private func __printPrompt(prompt: String, terminator: String) {
+        let modifier = CommandPrintManager.Modifier.default
+        Swift.print(modifier.modify(prompt + terminator), terminator: "")
+    }
+    
     /// Gets the value. This is guaranteed, as it would keep asking the user for correct input.
     public func get() -> Content {
         var result: Content? = nil
         
         switch contentKey {
         case .boolean:
-            Swift.print(self.prompt + " [y/n]", terminator: ": ")
+            __printPrompt(prompt: self.prompt + " [y/n]", terminator: ": ")
             
             while result == nil {
                 guard let read = Swift.readLine() else {
@@ -112,7 +124,7 @@ public struct CommandReadManager<Content> {
             }
             
         case .textFile:
-            Swift.print(prompt, terminator: ":\n")
+            __printPrompt(prompt: prompt, terminator: ":\n")
             
             while result == nil {
                 guard let read = Swift.readLine() else {
@@ -134,7 +146,7 @@ public struct CommandReadManager<Content> {
             }
             
         case .filePath:
-            Swift.print(prompt, terminator: ":\n")
+            __printPrompt(prompt: prompt, terminator: ":\n")
             
             while result == nil {
                 guard let read = Swift.readLine() else {
@@ -155,7 +167,7 @@ public struct CommandReadManager<Content> {
             }
             
         case .string:
-            Swift.print(prompt, terminator: ":\n")
+            __printPrompt(prompt: prompt, terminator: ":\n")
             
             while result == nil {
                 guard let read = Swift.readLine() else {
@@ -175,7 +187,7 @@ public struct CommandReadManager<Content> {
             }
             
         case .double, .int:
-            Swift.print(self.prompt, terminator: ": ")
+            __printPrompt(prompt: prompt, terminator: ": ")
             
             while result == nil {
                 guard let read = Swift.readLine() else {
@@ -202,7 +214,7 @@ public struct CommandReadManager<Content> {
             
 #if canImport(Support)
         case .finderItem:
-            Swift.print(prompt, terminator: ":\n")
+            __printPrompt(prompt: prompt, terminator: ":\n")
             
             while result == nil {
                 guard let read = Swift.readLine() else {
@@ -227,9 +239,10 @@ public struct CommandReadManager<Content> {
         return result!
     }
     
-    internal init(prompt: String, condition: ((_ content: Content) throws -> Bool)? = nil, contentKey: CommandReadableContent<Content>.ContentKey) {
+    internal init(prompt: String, condition: ((_ content: Content) throws -> Bool)? = nil, promptModifier: ((_ modifier: CommandPrintManager.Modifier) -> CommandPrintManager.Modifier)? = nil, contentKey: CommandReadableContent<Content>.ContentKey) {
         self.prompt = prompt
         self.condition = condition
+        self.promptModifier = promptModifier
         self.contentKey = contentKey
     }
     
