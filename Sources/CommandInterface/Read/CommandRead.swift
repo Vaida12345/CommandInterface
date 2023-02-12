@@ -254,7 +254,7 @@ public struct ReadError: LocalizedError {
     
     fileprivate let reason: String
     
-    public var errorDescription: String {
+    public var errorDescription: String? {
         self.reason
     }
     

@@ -9,6 +9,7 @@
 
 extension CommandPrintManager {
     
+    /// The system defined colors.
     public enum Color: UInt8 {
         
         case none = 0
