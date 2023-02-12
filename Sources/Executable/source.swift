@@ -9,15 +9,17 @@
 
 import CommandInterface
 
-
 @main
 private struct Command: CommandInterface {
     
     func main() throws {
-        print("Line 1")
-        print("Line 2")
-        print("\u{001B}[2J", terminator: "")
-        print("Line 3")
+        
+        let value = self.read(.double, prompt: "value")
+            .get()
+        
+        print("Read value: \(value)") {
+            $0.foregroundColor(.blue)
+        }
+        
     }
-    
 }

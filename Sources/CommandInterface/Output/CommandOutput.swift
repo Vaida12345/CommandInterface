@@ -8,7 +8,7 @@
 
 
 /// The interface for interacting with stdout.
-public struct CommandOutput {
+public struct CommandOutputManager {
     
     /// Ring the terminal bell, which is typically used for alert.
     ///
