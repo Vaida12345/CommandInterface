@@ -32,7 +32,7 @@ In your package, please use the following:
 
 ```swift
 dependencies: [
-    .package(url: )
+    .package(url: "https://github.com/Vaida12345/CommandInterface")
 ]
 ```
 

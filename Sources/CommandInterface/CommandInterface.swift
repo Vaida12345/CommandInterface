@@ -7,7 +7,6 @@
 //
 
 
-import CHelpers
 import CoreGraphics
 
 
@@ -71,20 +70,6 @@ public extension CommandInterface {
     
     func read<Content>(_ contentType: CommandReadableContent<Content>, prompt: String) -> CommandReadManager<Content> {
         CommandReadManager(prompt: prompt, contentKey: contentType.contentKey)
-    }
-    
-}
-
-
-public extension CommandInterface {
-    
-    func presentProgress(progress: Double) {
-        let size = __getTerminalSize()
-        let total = Int(size.ws_col - 2)
-        let completed = Int(Double(total) * progress)
-        
-        let value = "[" + String(repeating: "=", count: completed) + String(repeating: " ", count: total - completed) + "]"
-        print(value, terminator: "\r")
     }
     
 }

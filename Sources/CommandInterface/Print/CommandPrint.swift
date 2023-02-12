@@ -8,16 +8,29 @@
 
 
 import Darwin
+import CHelpers
 
 
 /// The interface for interacting with printing to stdout.
 public struct CommandPrintManager {
     
-    /// write any buffered data to stdout.
+    /// Writes any buffered data to stdout.
     ///
     /// - Returns: A boolean value indicating if the action succeed.
     @discardableResult func flush() -> Bool {
         fflush(stdout) != 0
+    }
+    
+    /// Prints progress bar given the value.
+    ///
+    /// To make the progress bar increases properly, please make sure no value is printed between two calls.
+    func progress(value: Double) {
+        let size = __getTerminalSize()
+        let total = Int(size.ws_col - 2)
+        let completed = Int(Double(total) * value)
+        
+        let value = "[" + String(repeating: "=", count: completed) + String(repeating: " ", count: total - completed) + "]"
+        print(value, terminator: "\r")
     }
     
 }
