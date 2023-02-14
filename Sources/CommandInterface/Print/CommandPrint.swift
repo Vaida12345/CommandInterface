@@ -9,6 +9,7 @@
 
 import Darwin
 import CHelpers
+import Foundation
 
 
 /// The interface for interacting with printing to stdout.

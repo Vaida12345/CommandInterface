@@ -10,7 +10,7 @@
 extension CommandPrintManager {
     
     /// The system defined colors.
-    public enum Color: UInt8 {
+    public enum Color: Int8 {
         
         case none = 0
         
@@ -33,6 +33,21 @@ extension CommandPrintManager {
         case brightCyan
         case brightWhite
         
+        // Stand alone colors
+        
+        /// A gray color with color ID 245.
+        case secondary = -1
+        
+        
+        internal var __256ColorCode: Int? {
+            guard self.rawValue < 0 else { return nil }
+            switch self.rawValue {
+            case -1:
+                return 245
+            default:
+                return nil
+            }
+        }
     }
     
 }

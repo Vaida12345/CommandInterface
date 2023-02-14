@@ -20,21 +20,29 @@ extension CommandPrintManager {
         private var backgroundColor: Color
         
         private var escaper: String {
-            var lhs: Set<Int> = []
+            var lhs: Array<Int> = [] // Use array instead of set as 256 color requires order.
             for shift in 0...7 {
                 if (self.contains(Modifier(rawValue: 1 << shift))) {
-                    lhs.insert(__escaper(shift))
+                    lhs.append(__escaper(shift))
                 }
             }
             
             if self.foregroundColor != .none {
-                lhs.insert(Int(self.foregroundColor.rawValue))
+                if let code = self.foregroundColor.__256ColorCode {
+                    lhs.append(contentsOf: [38, 5, code])
+                } else {
+                    lhs.append(Int(self.foregroundColor.rawValue))
+                }
             }
             if self.backgroundColor != .none {
-                lhs.insert(Int(self.backgroundColor.rawValue + 10))
+                if let code = self.backgroundColor.__256ColorCode {
+                    lhs.append(contentsOf: [48, 5, code])
+                } else {
+                    lhs.append(Int(self.backgroundColor.rawValue))
+                }
             }
             
-            return (lhs.map(String.init).joined(separator: ";"))
+            return (lhs.unique().map(String.init).joined(separator: ";"))
         }
         
         
@@ -142,6 +150,32 @@ extension CommandPrintManager {
             self.backgroundColor = backgroundColor
         }
         
+    }
+    
+}
+
+
+private extension Collection {
+    
+    /// Removes the repeated elements of an array, leaving only the entries different from each other.
+    ///
+    /// **Example**
+    ///
+    /// ```swift
+    /// [1, 2, 3, 1].unique() // [1, 2, 3]
+    /// ```
+    ///
+    /// - Returns: The array without repeated elements.
+    ///
+    /// - Complexity: O(*n*), where *n* is the length of this sequence.
+    func unique() -> [Element] where Element: Hashable {
+        var container: Set<Element> = []
+        var result: [Element] = []
+        self.forEach { element in
+            guard container.insert(element).inserted else { return }
+            result.append(element)
+        }
+        return result
     }
     
 }

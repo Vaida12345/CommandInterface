@@ -7,6 +7,9 @@
 //
 
 
+import Foundation
+
+
 /// The interface for interacting with stdout.
 public struct CommandOutputManager {
     
@@ -37,7 +40,7 @@ public struct CommandOutputManager {
     }
     
     /// Erase entire screen.
-    public func clear() {
+    public func clearScreen() {
         print("\u{001B}[2J", terminator: "")
     }
     

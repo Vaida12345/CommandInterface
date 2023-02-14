@@ -15,8 +15,12 @@ private struct Command: CommandInterface {
     func main() throws {
         
         let value = self.read(.double, prompt: "value")
+            .default(value: 3.14)
+            .promptModifier {
+                $0.foregroundColor(.brightGreen)
+            }
             .get()
-        
+
         print("Read value: \(value)") {
             $0.foregroundColor(.blue)
         }
