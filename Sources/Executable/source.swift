@@ -16,9 +16,7 @@ private struct Command: CommandInterface {
         
         let value = self.read(.double, prompt: "value")
             .default(value: 3.14)
-            .promptModifier {
-                $0.foregroundColor(.brightGreen)
-            }
+            .condition {  $0 < 0 }
             .get()
 
         print("Read value: \(value)") {

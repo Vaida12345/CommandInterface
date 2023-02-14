@@ -67,6 +67,24 @@ public extension CommandInterface {
         }
     }
     
+    /// Reads a value from stdin.
+    ///
+    /// Use this the way you use `SwiftUI` views and modifiers. for example,
+    ///
+    /// ```swift
+    /// let value = self.read(.double, prompt: "Enter a value")
+    ///     .default(value: 3.14)
+    ///     .condition { $0 < 0 }
+    ///     .get()
+    /// ```
+    ///
+    /// For a list of modifiers, see ``CommandReadManager``.
+    ///
+    /// - Important: Use .``CommandReadManager/get()`` to obtain the read value.
+    ///
+    /// - Parameters:
+    ///   - contentType: The content type for reading. See ``CommandReadableContent``.
+    ///   - prompt: The prompt shown to the user.
     func read<Content>(_ contentType: CommandReadableContent<Content>, prompt: String) -> CommandReadManager<Content> {
         CommandReadManager(prompt: prompt, contentKey: contentType.contentKey)
     }
