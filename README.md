@@ -13,7 +13,7 @@ import CommandInterface
 private struct Command: CommandInterface {
     
     func main() throws {
-        let value = self.read(.double, prompt: "value")
+        let value = self.read(.double, prompt: "Enter a value")
             .get()
         
         print("Read value: \(value)") {
@@ -40,4 +40,4 @@ dependencies: [
 
 Some of the functions only show correct output in Terminal, not Xcode.
 
-For escape codes, see [here by fnky](https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797)
+For escape codes, see [here by fnky](https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797).
