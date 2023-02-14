@@ -8,6 +8,9 @@
 
 
 import Foundation
+#if canImport(Support)
+import Support
+#endif
 
 
 /// The interface for interacting with reading from stdin.
@@ -176,7 +179,7 @@ public struct CommandReadManager<Content> {
 #if canImport(Support)
         case .finderItem:
             return __getLoop(prompt: prompt, terminator: ":\n") { read in
-                FinderItem(shellPath: read)
+                FinderItem(shellPath: read) as? Content
             }
 #endif
         }
