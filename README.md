@@ -41,3 +41,5 @@ dependencies: [
 Some of the functions only show correct output in Terminal, not Xcode.
 
 For escape codes, see [here by fnky](https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797).
+
+> Please note that not all the terminals supports all the escape codes. The Mac Terminal is no expection. 
