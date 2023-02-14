@@ -43,3 +43,21 @@ Some of the functions only show correct output in Terminal, not Xcode.
 For escape codes, see [here by fnky](https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797).
 
 > Please note that not all the terminals supports all the escape codes. The Mac Terminal is no expection. 
+
+## Working with [Swift Argument Parser](https://github.com/apple/swift-argument-parser)
+
+Make the `@main` struct conforms to both `CommandInterface` and `ParsableCommand`. If you have included `argument parser` in your workspace, you must ensure the `@main` struct conforms to `ParsableCommand`, even if you do not need to pass any argument.
+
+```swift
+import ArgumentParser
+import CommandInterface
+
+@main
+struct CommandLine: CommandInterface, ParsableCommand {
+    
+    func run() async throws {
+        // ...
+    }
+    
+}
+```

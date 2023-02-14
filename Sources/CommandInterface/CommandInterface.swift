@@ -11,6 +11,24 @@ import CoreGraphics
 
 
 /// The protocol whose conforming types serve as entry points.
+///
+/// ## Working with [Swift Argument Parser](https://github.com/apple/swift-argument-parser)
+///
+/// Make the `@main` struct conforms to both `CommandInterface` and ParsableCommand. If you have [argument parser](https://github.com/apple/swift-argument-parser) in your workspace, you must ensure the `@main` struct conforms to `ParsableCommand`, even if you do not need to pass any argument.
+///
+/// ```swift
+/// import ArgumentParser
+/// import CommandInterface
+///
+/// @main
+/// struct CommandLine: CommandInterface, ParsableCommand {
+/// 
+///     func run() async throws {
+///         // ...
+///     }
+///
+/// }
+/// ```
 public protocol CommandInterface {
     
     /// The entry point.
