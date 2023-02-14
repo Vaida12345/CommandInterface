@@ -12,7 +12,7 @@ import CommandInterface
 @main
 private struct Command: CommandInterface {
     
-    func main() throws {
+    func run() throws {
         let value = self.read(.double, prompt: "Enter a value")
             .get()
         

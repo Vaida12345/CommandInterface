@@ -14,7 +14,7 @@ import CoreGraphics
 public protocol CommandInterface {
     
     /// The entry point.
-    func main() async throws
+    func run() async throws
     
     /// The initializer of your structure.
     ///
@@ -29,7 +29,7 @@ public extension CommandInterface {
     /// The implementation of entry point.
     static func main() async {
         do {
-            try await Self().main()
+            try await Self().run()
         } catch {
             fatalError("Error: \(error)")
         }
