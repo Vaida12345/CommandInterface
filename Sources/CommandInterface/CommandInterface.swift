@@ -44,9 +44,9 @@ public protocol CommandInterface {
 
 public extension CommandInterface {
     
-#if canImport(ArgumentParser)
-    // Already defined in ArgumentParser.
-#else
+//#if canImport(ArgumentParser)
+//    // Already defined in ArgumentParser.
+//#else
     /// The implementation of entry point.
     static func main() async {
         do {
@@ -55,7 +55,7 @@ public extension CommandInterface {
             fatalError("Error: \(error)")
         }
     }
-#endif
+//#endif
     
     
     /// Link to the interface for interacting with printing to stdout.
