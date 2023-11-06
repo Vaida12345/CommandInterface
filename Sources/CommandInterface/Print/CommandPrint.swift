@@ -8,7 +8,6 @@
 
 
 import Darwin
-import CHelpers
 import Foundation
 
 
@@ -20,18 +19,6 @@ public struct CommandPrintManager {
     /// - Returns: A boolean value indicating if the action succeed.
     @discardableResult public func flush() -> Bool {
         fflush(stdout) != 0
-    }
-    
-    /// Prints progress bar given the value.
-    ///
-    /// To make the progress bar increases properly, please make sure no value is printed between two calls.
-    public func progress(value: Double) {
-        let size = __getTerminalSize()
-        let total = Int(size.ws_col - 2)
-        let completed = Int(Double(total) * value)
-        
-        let value = "[" + String(repeating: "=", count: completed) + String(repeating: " ", count: total - completed) + "]"
-        print(value, terminator: "\r")
     }
     
 }
