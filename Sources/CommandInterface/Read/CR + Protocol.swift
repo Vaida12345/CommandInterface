@@ -7,9 +7,7 @@
 //
 
 
-#if canImport(Support)
-import Support
-#endif
+import Nucleus
 
 
 /// A protocol indicating its `Content` is readable from stdin.
@@ -44,10 +42,8 @@ public struct CommandReadableContent<Content>: CommandReadable {
     /// Indicates reading double.
     public static var double: CommandReadableContent<Double> { .init(contentKey: .double) }
     
-#if canImport(Support)
     /// Indicates reading a file path that forms a FinderItem.
     public static var finderItem: CommandReadableContent<FinderItem> { .init(contentKey: .finderItem) }
-#endif
     
     
     private init(contentKey: ContentKey) {
@@ -62,9 +58,7 @@ public struct CommandReadableContent<Content>: CommandReadable {
         case string
         case int
         case double
-#if canImport(Support)
         case finderItem
-#endif
     }
     
 }
