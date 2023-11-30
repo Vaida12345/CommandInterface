@@ -124,7 +124,7 @@ public struct CommandReadManager<Content> {
             guard let value = try body(read) else { throw ReadError(reason: "Invalid Input") }
             
             let condition = try condition?(value)
-            guard condition ?? true else { throw ReadError(reason: "A unknown condition not met.") }
+            guard condition ?? true else { throw ReadError(reason: "Condition not met.") }
             return value
         } catch {
             if let error = error as? ReadError {
@@ -132,7 +132,7 @@ public struct CommandReadManager<Content> {
             } else {
                 print("\u{1B}[31m" + (error as NSError).localizedDescription + "\u{1B}[0m")
             }
-            Swift.print("\u{1B}[31mTry again\u{1B}[0m: ", terminator: "")
+            Swift.print("\u{1B}[31mTry again: \u{1B}[0m", terminator: "")
             
             return __getLoop(prompt: prompt, terminator: terminator, printPrompt: false, body: body)
         }
@@ -165,7 +165,7 @@ public struct CommandReadManager<Content> {
             }
             
         case .string:
-            return __getLoop(prompt: prompt, terminator: ":\n") { read in
+            return __getLoop(prompt: prompt, terminator: ": ") { read in
                 read as? Content
             }
             
