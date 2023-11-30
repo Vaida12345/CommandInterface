@@ -8,6 +8,7 @@
 
 
 import CoreGraphics
+import Foundation
 
 
 /// The protocol whose conforming types serve as entry points.
@@ -52,7 +53,8 @@ public extension CommandInterface {
         do {
             try await Self().run()
         } catch {
-            fatalError("Error: \(error)")
+            Swift.print("\u{001B}[1;31mTop Level Error: \((error as NSError).localizedDescription)\u{001B}[0m")
+            exit(1)
         }
     }
 //#endif
