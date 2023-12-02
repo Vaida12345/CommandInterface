@@ -33,7 +33,7 @@ import Foundation
 public protocol CommandInterface {
     
     /// The entry point.
-    func run() async throws
+    mutating func run() async throws
     
     /// The initializer of your structure.
     ///
@@ -51,7 +51,8 @@ public extension CommandInterface {
     /// The implementation of entry point.
     static func main() async {
         do {
-            try await Self().run()
+            var this = Self()
+            try await this.run()
         } catch {
             Swift.print("\u{001B}[1;31mTop Level Error: \((error as NSError).localizedDescription)\u{001B}[0m")
             exit(1)
