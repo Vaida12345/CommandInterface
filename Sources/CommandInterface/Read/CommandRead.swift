@@ -176,7 +176,7 @@ public struct CommandReadManager<Content> {
             
         case .finderItem:
             return __getLoop(prompt: prompt, terminator: ":\n") { read in
-                FinderItem(shellPath: read) as? Content
+                FinderItem(at: read) as? Content
             }
         }
     }
