@@ -26,7 +26,7 @@ private struct Command: CommandInterface {
 
 ## Getting started
 
-In your command-line tool, please include `CommandInterface` in your target dependency/
+In your command-line tool, please include `CommandInterface` in your target dependency
 
 In your package, please use the following:
 
