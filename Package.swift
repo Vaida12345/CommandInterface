@@ -3,7 +3,7 @@
 
 import PackageDescription
 
-let package = Package(
+let package = Package (
     name: "CommandInterface",
     platforms: [
         .macOS(.v13)
