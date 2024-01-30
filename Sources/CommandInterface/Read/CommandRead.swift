@@ -8,7 +8,7 @@
 
 
 import Foundation
-import Nucleus
+import Stratum
 
 
 /// The interface for interacting with reading from stdin.

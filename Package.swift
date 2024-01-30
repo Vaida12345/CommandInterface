@@ -10,9 +10,9 @@ let package = Package(
     ], products: [
         .library(name: "CommandInterface", targets: ["CommandInterface"]),
     ], dependencies: [
-        .package(name: "Nucleus", path: "/Users/vaida/Library/Mobile Documents/com~apple~CloudDocs/DataBase/Projects/Packages/DataBase")
+        .package(name: "Stratum", path: "/Users/vaida/Library/Mobile Documents/com~apple~CloudDocs/DataBase/Projects/Packages/Stratum")
     ], targets: [
-        .target(name: "CommandInterface", dependencies: ["Nucleus"]),
+        .target(name: "CommandInterface", dependencies: ["Stratum"]),
         .executableTarget(name: "Executable", dependencies: ["CommandInterface"]),
         .testTarget(name: "CommandInterfaceTests", dependencies: ["CommandInterface"]),
     ]

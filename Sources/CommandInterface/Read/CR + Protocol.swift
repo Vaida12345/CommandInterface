@@ -7,7 +7,7 @@
 //
 
 
-import Nucleus
+import Stratum
 
 
 /// A protocol indicating its `Content` is readable from stdin.
