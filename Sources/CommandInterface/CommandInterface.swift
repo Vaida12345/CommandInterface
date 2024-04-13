@@ -6,60 +6,18 @@
 //  Copyright © 2019 - 2023 Vaida. All rights reserved.
 //
 
-
-import CoreGraphics
 import Foundation
+import ArgumentParser
 
 
 /// The protocol whose conforming types serve as entry points.
-///
-/// ## Working with [Swift Argument Parser](https://github.com/apple/swift-argument-parser)
-///
-/// Make the `@main` struct conforms to both `CommandInterface` and ParsableCommand. If you have [argument parser](https://github.com/apple/swift-argument-parser) in your workspace, you must ensure the `@main` struct conforms to `ParsableCommand`, even if you do not need to pass any argument.
-///
-/// ```swift
-/// import ArgumentParser
-/// import CommandInterface
-///
-/// @main
-/// struct CommandLine: CommandInterface, ParsableCommand {
-/// 
-///     func run() async throws {
-///         // ...
-///     }
-///
-/// }
-/// ```
-public protocol CommandInterface {
+public protocol CommandInterface: ParsableCommand {
     
-    /// The entry point.
-    mutating func run() async throws
-    
-    /// The initializer of your structure.
-    ///
-    /// Typically this initializer does not require implementation, as Swift would do it for you.
-    init()
     
 }
 
 
 public extension CommandInterface {
-    
-//#if canImport(ArgumentParser)
-//    // Already defined in ArgumentParser.
-//#else
-    /// The implementation of entry point.
-    static func main() async {
-        do {
-            var this = Self()
-            try await this.run()
-        } catch {
-            Swift.print("\u{001B}[1;31mTop Level Error: \((error as NSError).localizedDescription)\u{001B}[0m")
-            exit(1)
-        }
-    }
-//#endif
-    
     
     /// Link to the interface for interacting with printing to stdout.
     ///
@@ -97,7 +55,7 @@ public extension CommandInterface {
     /// Use this the way you use `SwiftUI` views and modifiers. for example,
     ///
     /// ```swift
-    /// let value = self.read(.double, prompt: "Enter a value")
+    /// let value = read(.double, prompt: "Enter a value")
     ///     .default(value: 3.14)
     ///     .condition { $0 < 0 }
     ///     .get()
