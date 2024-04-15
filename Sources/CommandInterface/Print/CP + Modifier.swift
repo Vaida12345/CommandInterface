@@ -10,10 +10,10 @@
 extension CommandPrintManager {
     
     /// The modifier to the output.
-    public struct Modifier {
+    public struct Modifier: OptionSet {
         
         /// The internal rawValue.
-        private let rawValue: UInt8
+        public let rawValue: UInt8
         
         private var foregroundColor: Color
         
@@ -47,28 +47,28 @@ extension CommandPrintManager {
         
         
         /// The bold modifier.
-        private static let bold          = Modifier(rawValue: 1 << 0)
+        public static let bold          = Modifier(rawValue: 1 << 0)
         
         /// The dim / faint modifier.
-        private static let dim           = Modifier(rawValue: 1 << 1)
+        public static let dim           = Modifier(rawValue: 1 << 1)
         
         /// The italic modifier.
-        private static let italic        = Modifier(rawValue: 1 << 2)
+        public static let italic        = Modifier(rawValue: 1 << 2)
         
         /// The underline modifier.
-        private static let underline     = Modifier(rawValue: 1 << 3)
+        public static let underline     = Modifier(rawValue: 1 << 3)
         
         /// The blinking modifier.
-        private static let blinking      = Modifier(rawValue: 1 << 4)
+        public static let blinking      = Modifier(rawValue: 1 << 4)
         
         /// The inverse modifier.
-        private static let inverse       = Modifier(rawValue: 1 << 5)
+        public static let inverse       = Modifier(rawValue: 1 << 5)
         
         /// The hidden modifier.
-        private static let hidden        = Modifier(rawValue: 1 << 6)
+        public static let hidden        = Modifier(rawValue: 1 << 6)
         
         /// The strikethrough modifier.
-        private static let strikethrough = Modifier(rawValue: 1 << 7)
+        public static let strikethrough = Modifier(rawValue: 1 << 7)
         
         /// The default modifier, without any style.
         internal static let `default`    = Modifier(rawValue: 0 << 0)
@@ -130,15 +130,6 @@ extension CommandPrintManager {
             Modifier(rawValue: self.rawValue, foregroundColor: self.foregroundColor, backgroundColor: color)
         }
         
-        
-        private func union(_ other: Modifier) -> Modifier {
-            Modifier(rawValue: self.rawValue | other.rawValue)
-        }
-        
-        private func contains(_ other: Modifier) -> Bool {
-            other.rawValue & self.rawValue == other.rawValue
-        }
-        
         internal func modify(_ content: String) -> String {
             let escapers = self.escaper
             return "\u{1B}[\(escapers)m" + content + "\u{1B}[0m"
@@ -150,32 +141,9 @@ extension CommandPrintManager {
             self.backgroundColor = backgroundColor
         }
         
-    }
-    
-}
-
-
-private extension Collection {
-    
-    /// Removes the repeated elements of an array, leaving only the entries different from each other.
-    ///
-    /// **Example**
-    ///
-    /// ```swift
-    /// [1, 2, 3, 1].unique() // [1, 2, 3]
-    /// ```
-    ///
-    /// - Returns: The array without repeated elements.
-    ///
-    /// - Complexity: O(*n*), where *n* is the length of this sequence.
-    func unique() -> [Element] where Element: Hashable {
-        var container: Set<Element> = []
-        var result: [Element] = []
-        self.forEach { element in
-            guard container.insert(element).inserted else { return }
-            result.append(element)
+        public init(rawValue: UInt8) {
+            self.init(rawValue: rawValue, foregroundColor: .none, backgroundColor: .none)
         }
-        return result
     }
     
 }

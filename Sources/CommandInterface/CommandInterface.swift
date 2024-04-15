@@ -32,21 +32,11 @@ public extension CommandInterface {
     }
     
     /// Prints the target value.
-    ///
-    /// - Note: The terminator is not styled using `modifier`.
-    ///
-    /// - Parameters:
-    ///   - items: Zero or more items to print.
-    ///   - separator: A string to print between each item. The default is a single space (" ").
-    ///   - terminator: The string to print after all items have been printed. The default is a newline ("\n").
-    ///   - modifier: The style modifier to `items`.
-    func print(_ items: Any..., separator: String = " ", terminator: String = "\n", modifier: ((_ modifier: CommandPrintManager.Modifier) -> CommandPrintManager.Modifier)? = nil) {
-        let body = items.map(String.init(describing:)).joined(separator: separator)
-        
+    func print(_ item: CommandPrintManager.Interpolation, separator: String = " ", terminator: String = "\n", modifier: ((_ modifier: CommandPrintManager.Modifier) -> CommandPrintManager.Modifier)? = nil) {
         if let modifier = modifier?(CommandPrintManager.Modifier.default) {
-            Swift.print(modifier.modify(body), terminator: terminator)
+            Swift.print(modifier.modify(item.description), terminator: terminator)
         } else {
-            Swift.print(body, terminator: terminator)
+            Swift.print(item.description, terminator: terminator)
         }
     }
     
