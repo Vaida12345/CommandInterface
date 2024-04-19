@@ -29,14 +29,14 @@ extension CommandPrintManager {
             
             if self.foregroundColor != .none {
                 if let code = self.foregroundColor.__256ColorCode {
-                    lhs.append(contentsOf: [38, 5, code])
+                    lhs.append(code)
                 } else {
                     lhs.append(Int(self.foregroundColor.rawValue))
                 }
             }
             if self.backgroundColor != .none {
                 if let code = self.backgroundColor.__256ColorCode {
-                    lhs.append(contentsOf: [48, 5, code])
+                    lhs.append(code + 10)
                 } else {
                     lhs.append(Int(self.backgroundColor.rawValue))
                 }

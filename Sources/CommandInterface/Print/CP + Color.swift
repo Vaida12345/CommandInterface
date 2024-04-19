@@ -15,7 +15,7 @@ extension CommandPrintManager {
         case none = 0
         
         case black = 30
-        case red
+        case red = 31
         case green
         case yellow
         case blue
@@ -25,7 +25,7 @@ extension CommandPrintManager {
         case `default`
         
         case brightBlack = 90
-        case brightRed
+        case brightRed = 91
         case brightGreen
         case brightYellow
         case brightBlue
@@ -40,12 +40,11 @@ extension CommandPrintManager {
         
         
         internal var __256ColorCode: Int? {
-            guard self.rawValue < 0 else { return nil }
             switch self.rawValue {
             case -1:
                 return 245
             default:
-                return nil
+                return Int(self.rawValue)
             }
         }
     }
