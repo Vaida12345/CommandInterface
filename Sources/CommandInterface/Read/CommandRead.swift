@@ -19,7 +19,7 @@ public struct CommandReadManager<Content> {
     
     private let promptModifier: ((_ content: CommandPrintManager.Modifier) -> CommandPrintManager.Modifier)?
     
-    private var contentKey: CommandReadableContent<Content>.ContentKey
+    private var contentType: CommandReadableContent<Content>
     
     private var defaultValue: Content?
     
@@ -49,51 +49,23 @@ public struct CommandReadManager<Content> {
     ///     .get()
     /// ```
     public func condition(_ predicate: @escaping (_ content: Content) throws -> Bool) -> CommandReadManager {
-        CommandReadManager(prompt: self.prompt, condition: predicate, promptModifier: self.promptModifier, defaultValue: self.defaultValue, contentKey: self.contentKey)
+        CommandReadManager(prompt: self.prompt, condition: predicate, promptModifier: self.promptModifier, defaultValue: self.defaultValue, contentType: self.contentType)
     }
     
     /// The style modifier to the prompt.
     public func promptModifier(_ modifier: @escaping (_ content: CommandPrintManager.Modifier) -> CommandPrintManager.Modifier) -> CommandReadManager {
-        CommandReadManager(prompt: self.prompt, condition: self.condition, promptModifier: modifier, defaultValue: self.defaultValue, contentKey: self.contentKey)
+        CommandReadManager(prompt: self.prompt, condition: self.condition, promptModifier: modifier, defaultValue: self.defaultValue, contentType: self.contentType)
     }
     
     /// Sets the default value. If no input was received, the default value would be used.
     public func `default`(value: Content) -> CommandReadManager {
-        CommandReadManager(prompt: self.prompt, condition: self.condition, promptModifier: self.promptModifier, defaultValue: value, contentKey: self.contentKey)
+        CommandReadManager(prompt: self.prompt, condition: self.condition, promptModifier: self.promptModifier, defaultValue: value, contentType: self.contentType)
     }
     
     
     // MARK: - Internal
     
-    private func __normalize(filePath: String) -> String {
-        (filePath.hasSuffix(" ") ? String(filePath.dropLast()) : filePath)
-            .replacingOccurrences(of: "\\ ", with: " ")
-            .replacingOccurrences(of: "\\(", with: "(")
-            .replacingOccurrences(of: "\\)", with: ")")
-            .replacingOccurrences(of: "\\[", with: "[")
-            .replacingOccurrences(of: "\\]", with: "]")
-            .replacingOccurrences(of: "\\{", with: "{")
-            .replacingOccurrences(of: "\\}", with: "}")
-            .replacingOccurrences(of: "\\`", with: "`")
-            .replacingOccurrences(of: "\\~", with: "~")
-            .replacingOccurrences(of: "\\!", with: "!")
-            .replacingOccurrences(of: "\\@", with: "@")
-            .replacingOccurrences(of: "\\#", with: "#")
-            .replacingOccurrences(of: "\\$", with: "$")
-            .replacingOccurrences(of: "\\%", with: "%")
-            .replacingOccurrences(of: "\\&", with: "&")
-            .replacingOccurrences(of: "\\*", with: "*")
-            .replacingOccurrences(of: "\\=", with: "=")
-            .replacingOccurrences(of: "\\|", with: "|")
-            .replacingOccurrences(of: "\\;", with: ";")
-            .replacingOccurrences(of: "\\\"", with: "\"")
-            .replacingOccurrences(of: "\\\'", with: "\'")
-            .replacingOccurrences(of: "\\<", with: "<")
-            .replacingOccurrences(of: "\\>", with: ">")
-            .replacingOccurrences(of: "\\,", with: ",")
-            .replacingOccurrences(of: "\\?", with: "?")
-            .replacingOccurrences(of: "\\\\", with: "\\")
-    }
+    
     
     private func __printPrompt(prompt: String, terminator: String) {
         let modifier = (promptModifier ?? { $0 })(.default)
@@ -120,10 +92,15 @@ public struct CommandReadManager<Content> {
         }
         
         do {
+            if let condition = contentType.condition {
+                guard try condition(read) else { throw ReadError(reason: "Invalid Input.") }
+            }
+            
             guard let value = try body(read) else { throw ReadError(reason: "Invalid Input") }
             
             let condition = try condition?(value)
-            guard condition ?? true else { throw ReadError(reason: "Condition not met.") }
+            guard condition ?? true else { throw ReadError(reason: "Invalid Input.") }
+            
             return value
         } catch {
             if let error = error as? ReadError {
@@ -139,52 +116,14 @@ public struct CommandReadManager<Content> {
     
     /// Gets the value. This is guaranteed, as it would keep asking the user for correct input.
     public func get() -> Content {
-        switch contentKey {
-        case .boolean:
-            return __getLoop(prompt: self.prompt + " [y/n]", terminator: ": ") { read in
-                switch read.lowercased() {
-                case "yes", "y":
-                    return true as? Content
-                case "no", "n":
-                    return false as? Content
-                default:
-                    return nil
-                }
-            }
-            
-        case .textFile:
-            return __getLoop(prompt: prompt, terminator: ":\n") { read in
-                let filePath = __normalize(filePath: read)
-                return try String(contentsOfFile: filePath) as? Content
-            }
-            
-        case .filePath:
-            return __getLoop(prompt: prompt, terminator: ":\n") { read in
-                __normalize(filePath: read) as? Content
-            }
-            
-        case .string:
-            return __getLoop(prompt: prompt, terminator: ": ") { read in
-                read as? Content
-            }
-            
-        case .double, .int:
-            return __getLoop(prompt: prompt, terminator: ": ") { read in
-                self.contentKey == .double ? Double(read) as? Content : Int(read) as? Content
-            }
-            
-        case .finderItem:
-            return __getLoop(prompt: prompt, terminator: ":\n") { read in
-                FinderItem(at: read) as? Content
-            }
-        }
+        __getLoop(prompt: self.prompt, terminator: self.contentType.terminator, body: self.contentType.initializer)
     }
     
-    internal init(prompt: String, condition: ((_ content: Content) throws -> Bool)? = nil, promptModifier: ((_ modifier: CommandPrintManager.Modifier) -> CommandPrintManager.Modifier)? = nil, defaultValue: Content? = nil, contentKey: CommandReadableContent<Content>.ContentKey) {
+    internal init(prompt: String, condition: ((_ content: Content) throws -> Bool)? = nil, promptModifier: ((_ modifier: CommandPrintManager.Modifier) -> CommandPrintManager.Modifier)? = nil, defaultValue: Content? = nil, contentType: CommandReadableContent<Content>) {
         self.prompt = prompt
         self.condition = condition
         self.promptModifier = promptModifier
-        self.contentKey = contentKey
+        self.contentType = contentType
         self.defaultValue = defaultValue
     }
     
@@ -208,4 +147,44 @@ public struct ReadError: LocalizedError {
         self.reason = reason
     }
     
+}
+
+
+extension CommandReadManager: CustomStringConvertible where Content: CustomStringConvertible {
+    
+    public var description: String {
+        self.get().description
+    }
+    
+}
+
+
+func __normalize(filePath: String) -> String {
+    (filePath.hasSuffix(" ") ? String(filePath.dropLast()) : filePath)
+        .replacingOccurrences(of: "\\ ", with: " ")
+        .replacingOccurrences(of: "\\(", with: "(")
+        .replacingOccurrences(of: "\\)", with: ")")
+        .replacingOccurrences(of: "\\[", with: "[")
+        .replacingOccurrences(of: "\\]", with: "]")
+        .replacingOccurrences(of: "\\{", with: "{")
+        .replacingOccurrences(of: "\\}", with: "}")
+        .replacingOccurrences(of: "\\`", with: "`")
+        .replacingOccurrences(of: "\\~", with: "~")
+        .replacingOccurrences(of: "\\!", with: "!")
+        .replacingOccurrences(of: "\\@", with: "@")
+        .replacingOccurrences(of: "\\#", with: "#")
+        .replacingOccurrences(of: "\\$", with: "$")
+        .replacingOccurrences(of: "\\%", with: "%")
+        .replacingOccurrences(of: "\\&", with: "&")
+        .replacingOccurrences(of: "\\*", with: "*")
+        .replacingOccurrences(of: "\\=", with: "=")
+        .replacingOccurrences(of: "\\|", with: "|")
+        .replacingOccurrences(of: "\\;", with: ";")
+        .replacingOccurrences(of: "\\\"", with: "\"")
+        .replacingOccurrences(of: "\\\'", with: "\'")
+        .replacingOccurrences(of: "\\<", with: "<")
+        .replacingOccurrences(of: "\\>", with: ">")
+        .replacingOccurrences(of: "\\,", with: ",")
+        .replacingOccurrences(of: "\\?", with: "?")
+        .replacingOccurrences(of: "\\\\", with: "\\")
 }

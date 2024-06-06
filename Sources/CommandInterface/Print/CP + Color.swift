@@ -16,22 +16,22 @@ extension CommandPrintManager {
         
         case black = 30
         case red = 31
-        case green
-        case yellow
-        case blue
-        case magenta
-        case cyan
-        case white
-        case `default`
+        case green = 32
+        case yellow = 33
+        case blue = 34
+        case magenta = 35
+        case cyan = 36
+        case white = 37
+        case `default` = 38
         
         case brightBlack = 90
         case brightRed = 91
-        case brightGreen
-        case brightYellow
-        case brightBlue
-        case brightMagenta
-        case brightCyan
-        case brightWhite
+        case brightGreen = 92
+        case brightYellow = 93
+        case brightBlue = 94
+        case brightMagenta = 95
+        case brightCyan = 96
+        case brightWhite = 97
         
         // Stand alone colors
         

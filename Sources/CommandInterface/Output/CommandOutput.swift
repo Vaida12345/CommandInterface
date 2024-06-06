@@ -9,6 +9,9 @@
 import Foundation
 
 
+fileprivate let escape = "\u{001B}"
+
+
 /// The interface for interacting with stdout.
 public struct CommandOutputManager {
     
@@ -23,24 +26,77 @@ public struct CommandOutputManager {
         print("\u{7}", terminator: "")
     }
     
-    /// Reset the position of the cursor to the beginning of the current line.
-    ///
-    /// The cursor is moved to the left-most position on the current line, effectively "overwriting" any characters that were previously displayed on that line.
+    /// Clear the current line on which the cursor is on.
     ///
     /// ```swift
-    /// print("abc")
-    /// self.output.carriageReturn()
-    /// print(123)
+    /// print("hdsuaidhsaiudhsuaidhsauihdsaui", terminator: "")
+    /// self.output.clearLine()
+    /// print(12)
     ///
-    /// // output is 123.
+    /// // output is 12
     /// ```
-    public func carriageReturn() {
-        print("\u{13}", terminator: "")
+    public func clearLine() {
+        print("\(escape)[1K", terminator: "")
+        print("\(escape)[0G", terminator: "")
+    }
+    
+    /// Clear the previous line on which the cursor is on.
+    ///
+    /// ```swift
+    /// print("hdsuaidhsaiudhsuaidhsauihdsaui")
+    /// self.output.clearLastLine()
+    /// print(12)
+    ///
+    /// // output is 12, the first line is erased
+    /// ```
+    public func clearLastLine() {
+        print("\(escape)[1F", terminator: "") // one line up, to beginning
+        print("\(escape)[0K", terminator: "") // erase til end of line
+        print("\(escape)[0G", terminator: "") // reset cursor
     }
     
     /// Erase entire screen.
     public func clearScreen() {
-        print("\u{001B}[2J", terminator: "")
+        print("\(escape)[2J", terminator: "")
+        self.moveToHome()
+    }
+    
+    /// moves cursor to home position (0, 0)
+    public func moveToHome() {
+        print("\(escape)[H", terminator: "")
+    }
+    
+    /// moves cursor to column `toColumn` within the same line.
+    ///
+    /// ```swift
+    /// print("abc")
+    /// self.output.moveCursor()
+    /// print(1)
+    ///
+    /// // output is 1bc.
+    /// ```
+    public func moveCursor(toColumn: Int = 0) {
+        print("\(escape)[\(toColumn)G", terminator: "")
+    }
+    
+    public func moveCursor(toRight: Int) {
+        if toRight > 0 {
+            print("\(escape)[\(toRight)C", terminator: "")
+        } else if toRight < 0 {
+            print("\(escape)[\(abs(toRight))D", terminator: "")
+        }
+    }
+    
+    public func eraseFromCursorToEndOfLine() {
+        print("\(escape)[0K", terminator: "")
+    }
+    
+    public func eraseAtCursorPosition() {
+        print("\(escape)[P", terminator: "")
+    }
+    
+    public func insertAtCursor(_ value: String) {
+        print("\(escape)[@\(value)", terminator: "")
     }
     
 }

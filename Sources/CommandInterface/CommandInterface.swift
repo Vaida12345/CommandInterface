@@ -58,8 +58,102 @@ public extension CommandInterface {
     /// - Parameters:
     ///   - contentType: The content type for reading. See ``CommandReadableContent``.
     ///   - prompt: The prompt shown to the user.
-    func read<Content>(_ contentType: CommandReadableContent<Content>, prompt: String) -> CommandReadManager<Content> {
-        CommandReadManager(prompt: prompt, contentKey: contentType.contentKey)
+    func read<Content>(_ contentType: CommandReadableContent<Content>, prompt: CommandPrintManager.Interpolation) -> CommandReadManager<Content> {
+        CommandReadManager(prompt: prompt.description, contentType: contentType)
     }
     
+    /// Consume and returns next char.
+    ///
+    /// To use this, you must define the following in the function in which this is called.
+    ///
+    /// - Note: You need to `fflush` to push output.
+    ///
+    /// ```swift
+    /// var __raw = setRawMode()
+    /// defer {
+    ///     resetTerminal(originalTerm: &__raw)
+    /// }
+    /// ```
+    func consumeNext() -> NextChar? {
+        
+        let inputHandle = FileHandle.standardInput
+        guard let next = try? inputHandle.read(upToCount: 1), let char = String(data: next, encoding: .utf8) else { return nil }
+        
+        switch char {
+        case "\u{1B}" :
+            if let next = try? inputHandle.read(upToCount: 2), let strings = String(data: next, encoding: .utf8) {
+                let char = [Character](strings)
+                if char.count == 2, char[0] == "[" {
+                    switch char[1] {
+                    case "A":
+                        return .up
+                    case "B":
+                        return .down
+                    case "C":
+                        return .right
+                    case "D":
+                        return .left
+                    default:
+                        return .string("\u{1B}\(char)")
+                    }
+                } else {
+                    return .string("\u{1B}\(char)")
+                }
+            } else {
+                return .string("\u{1B}")
+            }
+            
+        case "\t":
+            return .tab
+            
+        case "\n":
+            return .newline
+            
+        case "\u{7F}":
+            return .backspace
+            
+        default:
+            return .string(char)
+        }
+    }
+    
+    
+    // Function to set the terminal to raw mode
+    func setRawMode() -> termios {
+        fflush(stdout)
+        
+        var originalTerm = termios()
+        var rawTerm = termios()
+        
+        // Get the current terminal settings
+        tcgetattr(STDIN_FILENO, &originalTerm)
+        rawTerm = originalTerm
+        
+        // Set the terminal to raw mode
+        rawTerm.c_lflag &= ~(UInt(ICANON | ECHO))
+        rawTerm.c_cc.0 = 1 // VMIN
+        rawTerm.c_cc.1 = 0 // VTIME
+        
+        tcsetattr(STDIN_FILENO, TCSANOW, &rawTerm)
+        
+        return originalTerm
+    }
+    
+    // Function to reset the terminal to its original settings
+    func resetTerminal(originalTerm: inout termios) {
+        tcsetattr(STDIN_FILENO, TCSANOW, &originalTerm)
+    }
+    
+}
+
+
+public enum NextChar: Equatable {
+    case up
+    case down
+    case right
+    case left
+    case tab
+    case newline
+    case backspace
+    case string(String)
 }
