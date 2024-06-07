@@ -13,7 +13,8 @@ let package = Package (
         .package(name: "Stratum", path: "/Users/vaida/Library/Mobile Documents/com~apple~CloudDocs/DataBase/Projects/Packages/Stratum"),
         .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.3.0")
     ], targets: [
-        .target(name: "CommandInterface", dependencies: ["Stratum", .product(name: "ArgumentParser", package: "swift-argument-parser")]),
-        .testTarget(name: "CommandInterfaceTests", dependencies: ["CommandInterface"])
+        .target(name: "CommandInterface", dependencies: ["Stratum", .product(name: "ArgumentParser", package: "swift-argument-parser"), "CICComponent"]),
+        .testTarget(name: "CommandInterfaceTests", dependencies: ["CommandInterface"]),
+        .target(name: "CICComponent")
     ]
 )

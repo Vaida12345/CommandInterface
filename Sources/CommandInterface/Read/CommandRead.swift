@@ -13,15 +13,15 @@ import Stratum
 /// The interface for interacting with reading from stdin.
 public struct CommandReadManager<Content> {
     
-    private let prompt: String
+    internal let prompt: String
     
-    private let condition: ((_ content: Content) throws -> Bool)?
+    internal let condition: ((_ content: Content) throws -> Bool)?
     
-    private let promptModifier: ((_ content: CommandPrintManager.Modifier) -> CommandPrintManager.Modifier)?
+    internal let promptModifier: ((_ content: CommandPrintManager.Modifier) -> CommandPrintManager.Modifier)?
     
-    private var contentType: CommandReadableContent<Content>
+    internal var contentType: CommandReadableContent<Content>
     
-    private var defaultValue: Content?
+    internal var defaultValue: Content?
     
     
     // MARK: - Modifiers
@@ -67,7 +67,7 @@ public struct CommandReadManager<Content> {
     
     
     
-    private func __printPrompt(prompt: String, terminator: String) {
+    internal func __printPrompt(prompt: String, terminator: String) {
         let modifier = (promptModifier ?? { $0 })(.default)
         Swift.print(modifier.modify(prompt + terminator), terminator: "")
     }
@@ -78,7 +78,7 @@ public struct CommandReadManager<Content> {
         }
         
         guard let read = Swift.readLine() else {
-            CommandOutputManager().bell()
+            Terminal.bell()
             Swift.print("\u{1B}[31mTry again\u{1B}[0m: ", terminator: "")
             return __getLoop(prompt: prompt, terminator: terminator, printPrompt: false, body: body)
         }
@@ -116,7 +116,11 @@ public struct CommandReadManager<Content> {
     
     /// Gets the value. This is guaranteed, as it would keep asking the user for correct input.
     public func get() -> Content {
-        __getLoop(prompt: self.prompt, terminator: self.contentType.terminator, body: self.contentType.initializer)
+        if let getLoop = contentType.overrideGetLoop {
+            getLoop(self, contentType)
+        } else {
+            __getLoop(prompt: self.prompt, terminator: self.contentType.terminator, body: self.contentType.initializer)
+        }
     }
     
     internal init(prompt: String, condition: ((_ content: Content) throws -> Bool)? = nil, promptModifier: ((_ modifier: CommandPrintManager.Modifier) -> CommandPrintManager.Modifier)? = nil, defaultValue: Content? = nil, contentType: CommandReadableContent<Content>) {
@@ -133,7 +137,7 @@ public struct CommandReadManager<Content> {
 /// The error with a reason for the failure of reading.
 public struct ReadError: LocalizedError {
     
-    fileprivate let reason: String
+    let reason: String
     
     public var errorDescription: String? {
         self.reason
