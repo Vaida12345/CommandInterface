@@ -14,7 +14,7 @@ extension CommandPrintManager {
     
     public struct Interpolation: StringInterpolationProtocol, CustomStringConvertible, TextOutputStream, ExpressibleByStringInterpolation {
         
-        var value: String
+        private var value: String
         
         public var description: String {
             self.value

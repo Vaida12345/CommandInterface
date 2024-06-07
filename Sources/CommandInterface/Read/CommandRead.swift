@@ -23,6 +23,8 @@ public struct CommandReadManager<Content> {
     
     internal var defaultValue: Content?
     
+    internal var terminator: String? = nil
+    
     
     // MARK: - Modifiers
     
@@ -49,17 +51,17 @@ public struct CommandReadManager<Content> {
     ///     .get()
     /// ```
     public func condition(_ predicate: @escaping (_ content: Content) throws -> Bool) -> CommandReadManager {
-        CommandReadManager(prompt: self.prompt, condition: predicate, promptModifier: self.promptModifier, defaultValue: self.defaultValue, contentType: self.contentType)
+        CommandReadManager(prompt: self.prompt, condition: predicate, promptModifier: self.promptModifier, defaultValue: self.defaultValue, contentType: self.contentType, terminator: self.terminator)
     }
     
     /// The style modifier to the prompt.
     public func promptModifier(_ modifier: @escaping (_ content: CommandPrintManager.Modifier) -> CommandPrintManager.Modifier) -> CommandReadManager {
-        CommandReadManager(prompt: self.prompt, condition: self.condition, promptModifier: modifier, defaultValue: self.defaultValue, contentType: self.contentType)
+        CommandReadManager(prompt: self.prompt, condition: self.condition, promptModifier: modifier, defaultValue: self.defaultValue, contentType: self.contentType, terminator: self.terminator)
     }
     
     /// Sets the default value. If no input was received, the default value would be used.
     public func `default`(value: Content) -> CommandReadManager {
-        CommandReadManager(prompt: self.prompt, condition: self.condition, promptModifier: self.promptModifier, defaultValue: value, contentType: self.contentType)
+        CommandReadManager(prompt: self.prompt, condition: self.condition, promptModifier: self.promptModifier, defaultValue: value, contentType: self.contentType, terminator: self.terminator)
     }
     
     
@@ -69,7 +71,7 @@ public struct CommandReadManager<Content> {
     
     internal func __printPrompt(prompt: String, terminator: String) {
         let modifier = (promptModifier ?? { $0 })(.default)
-        Swift.print(modifier.modify(prompt + terminator), terminator: "")
+        Swift.print(modifier.modify(prompt), terminator: self.terminator ?? terminator)
     }
     
     private func __getLoop(prompt: String, terminator: String, printPrompt: Bool = true, body: @escaping (_ read: String) throws -> Content?) -> Content {
@@ -123,12 +125,13 @@ public struct CommandReadManager<Content> {
         }
     }
     
-    internal init(prompt: String, condition: ((_ content: Content) throws -> Bool)? = nil, promptModifier: ((_ modifier: CommandPrintManager.Modifier) -> CommandPrintManager.Modifier)? = nil, defaultValue: Content? = nil, contentType: CommandReadableContent<Content>) {
+    internal init(prompt: String, condition: ((_ content: Content) throws -> Bool)? = nil, promptModifier: ((_ modifier: CommandPrintManager.Modifier) -> CommandPrintManager.Modifier)? = nil, defaultValue: Content? = nil, contentType: CommandReadableContent<Content>, terminator: String? = nil) {
         self.prompt = prompt
         self.condition = condition
         self.promptModifier = promptModifier
         self.contentType = contentType
         self.defaultValue = defaultValue
+        self.terminator = terminator
     }
     
 }

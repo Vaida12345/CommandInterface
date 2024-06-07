@@ -11,11 +11,13 @@ import CICComponent
 
 public struct Cursor {
     
-    private static var escape: String {
+    @inlinable
+    public static var escape: Character {
         Terminal.escape
     }
     
     /// moves cursor to home position (0, 0), scrolled to top.
+    @inlinable
     public static func moveToHome() {
         print("\(escape)[H", terminator: "")
     }
@@ -29,10 +31,12 @@ public struct Cursor {
     ///
     /// // output is 1bc.
     /// ```
+    @inlinable
     public static func move(toColumn: Int) {
         print("\(escape)[\(toColumn)G", terminator: "")
     }
     
+    @inlinable
     public static func move(toRight: Int) {
         if toRight > 0 {
             print("\(escape)[\(toRight)C", terminator: "")
@@ -41,12 +45,14 @@ public struct Cursor {
         }
     }
     
+    @inlinable
     public static func move(toLeft: Int) {
         move(toRight: -toLeft)
     }
     
     
-    static func currentPosition() throws -> (column: Int, line: Int) {
+    @inlinable
+    static func currentPosition() throws -> (line: Int, column: Int) {
         var x: Int32 = 0
         var y: Int32 = 0
         get_pos(&x, &y)
@@ -54,6 +60,7 @@ public struct Cursor {
     }
     
     /// Note that line and column starts with `1`.
+    @inlinable
     public static func moveTo(line: Int, column: Int) {
         print("\(escape)[\(line);\(column)f", terminator: "")
     }

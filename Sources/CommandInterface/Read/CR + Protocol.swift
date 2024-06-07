@@ -78,7 +78,7 @@ public struct CommandReadableContent<Content>: CommandReadable {
     } }
     
     
-    init(contentKey: ContentKey, terminator: String, condition: ((String) throws -> Bool)? = nil, initializer: @escaping (String) throws -> Content?, overrideGetLoop: ((_ manager: CommandReadManager<Content>, _ content: CommandReadableContent<Content>) -> Content)? = nil) {
+    private init(contentKey: ContentKey, terminator: String, condition: ((String) throws -> Bool)? = nil, initializer: @escaping (String) throws -> Content?, overrideGetLoop: ((_ manager: CommandReadManager<Content>, _ content: CommandReadableContent<Content>) -> Content)? = nil) {
         self.contentKey = contentKey
         self.terminator = terminator
         self.condition = condition
@@ -100,8 +100,7 @@ public struct CommandReadableContent<Content>: CommandReadable {
     
     private func __askToChoose<Option>(from options: Array<Option>) -> String? where Option: RawRepresentable, Option.RawValue == String {
         
-        var buffer: [Character] = []
-        var cursor = 0
+        var storage = StandardInputStorage()
         
         var rotate = 0
         func rotateUp() {
@@ -126,16 +125,6 @@ public struct CommandReadableContent<Content>: CommandReadable {
         var lastInput: NextChar? = nil
         var __buffer: [Character] = []
         
-        func clearEntered() {
-            // rotate to end
-            while cursor > 0 {
-                cursor -= 1
-                Cursor.move(toRight: -1)
-            }
-            Terminal.eraseFromCursorToEndOfLine()
-            buffer.removeAll()
-        }
-        
         while let key = __consumeNext() {
             switch key {
             case .up: // Up arrow, rotate
@@ -145,11 +134,8 @@ public struct CommandReadableContent<Content>: CommandReadable {
                     rotateUp()
                 }
                 
-                clearEntered()
-                print(options[rotate].rawValue, terminator: "")
-                
-                buffer.append(contentsOf: options[rotate].rawValue)
-                cursor += options[rotate].rawValue.count
+                storage.clearEntered()
+                storage.insertAtCursor(options[rotate].rawValue)
             case .down: // Down arrow, rotate
                 if !showInitial {
                     showInitial = true
@@ -157,61 +143,37 @@ public struct CommandReadableContent<Content>: CommandReadable {
                     rotateDown()
                 }
                 
-                clearEntered()
-                print(options[rotate].rawValue, terminator: "")
-                
-                buffer.append(contentsOf: options[rotate].rawValue)
-                cursor += options[rotate].rawValue.count
+                storage.clearEntered()
+                storage.insertAtCursor(options[rotate].rawValue)
             case .right: // Right arrow, do nothing
-                if cursor < buffer.count {
-                    Cursor.move(toRight: 1)
-                    cursor += 1
-                }
+                storage.move(to: .right)
             case .left: // Left arrow, do nothing
-                if cursor > 0 {
-                    Cursor.move(toRight: -1)
-                    cursor -= 1
-                }
+                storage.move(to: .left)
             case .tab: // Tab key
                        //            print("    ", terminator: "")
                        //
                        //            buffer.append(contentsOf: "    ")
                        //            cursor += 4
                 if lastInput != .tab {
-                    __buffer = buffer
+                    __buffer = storage.buffer
                 } else {
                     rotateMatchingDown()
                 }
                 guard !matching.isEmpty else { continue }
                 let match = matching[matchingRotate]
-                clearEntered()
+                storage.clearEntered()
                 
-                print(match, terminator: "")
-                
-                buffer.append(contentsOf: match)
-                cursor += match.count
+                storage.insertAtCursor(match)
             case .newline: // Enter key
                 print("\n", terminator: "")
                 
-                return String(buffer)
-                
-                buffer.removeAll()
-                cursor = 0
-            case .backspace: // Backspace key
-                if cursor > 0 {
-                    Cursor.move(toRight: -1)
-                    Swift.print("\(Terminal.escape)[P", terminator: "")
-                    cursor -= 1
-                    
-                    if cursor < buffer.count {
-                        buffer.remove(at: cursor)
-                    }
-                }
-            case .string(let value): // Other characters
-                print("\(Terminal.escape)[@\(value)", terminator: "")
-                
-                buffer.insert(contentsOf: value, at: cursor)
-                cursor += value.count
+                return String(storage.buffer)
+            case .delete: // Backspace key
+                storage.deleteBeforeCursor()
+            case .char(let value): // Other characters
+                storage.insertAtCursor(value)
+            default:
+                continue
             }
             
             fflush(stdout);
@@ -224,6 +186,7 @@ public struct CommandReadableContent<Content>: CommandReadable {
     
     private func __optionsGetLoop(manager: CommandReadManager<Content>) -> Content where Content: RawRepresentable & CaseIterable, Content.RawValue == String {
         manager.__printPrompt(prompt: manager.prompt, terminator: self.terminator)
+        fflush(stdout)
         
         guard let option = __askToChoose(from: Array(Content.allCases)) else {
             Terminal.bell()

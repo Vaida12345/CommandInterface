@@ -79,36 +79,43 @@ extension CommandPrintManager {
         }
         
         /// The bold modifier.
+        @inlinable
         public func bold() -> Modifier {
             self.union(.bold)
         }
         
         /// The italic modifier.
+        @inlinable
         public func italic() -> Modifier {
             self.union(.italic)
         }
         
         /// The dim modifier.
+        @inlinable
         public func dim() -> Modifier {
             self.union(.dim)
         }
         
         /// The underline modifier.
+        @inlinable
         public func underline() -> Modifier {
             self.union(.underline)
         }
         
         /// The blinking modifier.
+        @inlinable
         public func blinking() -> Modifier {
             self.union(.blinking)
         }
         
         /// The inverse modifier.
+        @inlinable
         public func inverse() -> Modifier {
             self.union(.inverse)
         }
         
         /// The hidden modifier.
+        @inlinable
         public func hidden() -> Modifier {
             self.union(.hidden)
         }
@@ -116,6 +123,7 @@ extension CommandPrintManager {
         /// The strikethrough modifier.
         ///
         /// - Experiment: This is not supported in Mac Terminal.
+        @inlinable
         public func strikethrough() -> Modifier {
             self.union(.strikethrough)
         }

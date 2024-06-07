@@ -12,12 +12,13 @@ import Foundation
 /// The interface for interacting with stdout.
 public struct Terminal {
     
+    @inlinable
     public static var cursor: Cursor.Type {
         Cursor.self
     }
     
     /// - SeeAlso: https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797
-    static let escape = "\u{001B}"
+    public static let escape: Character = "\u{001B}"
     
     /// Ring the terminal bell, which is typically used for alert.
     ///
@@ -26,6 +27,7 @@ public struct Terminal {
     ///
     /// // no output, the terminal would flash to indicate error.
     /// ```
+    @inlinable
     public static func bell() {
         print("\u{7}", terminator: "")
     }
@@ -39,6 +41,7 @@ public struct Terminal {
     ///
     /// // output is 12
     /// ```
+    @inlinable
     public static func clearLine() {
         print("\(escape)[2K", terminator: "")
         print("\(escape)[0G", terminator: "")
@@ -53,6 +56,7 @@ public struct Terminal {
     ///
     /// // output is 12, the first line is erased
     /// ```
+    @inlinable
     public static func clearLastLine() {
         print("\(escape)[1F", terminator: "") // one line up, to beginning
         print("\(escape)[0K", terminator: "") // erase til end of line
@@ -60,19 +64,23 @@ public struct Terminal {
     }
     
     /// Erase entire screen.
+    @inlinable
     public static func clearScreen() {
         print("\(escape)[2J", terminator: "")
         Cursor.moveToHome()
     }
     
+    @inlinable
     public static func eraseFromCursorToEndOfLine() {
         print("\(escape)[0K", terminator: "")
     }
     
+    @inlinable
     public static func eraseFromStartOfLineToCursor() {
         print("\(escape)[1K", terminator: "")
     }
     
+    @inlinable
     public static func insertAtCursor(_ value: String) {
         print("\(escape)[@\(value)", terminator: "")
     }

@@ -16,7 +16,9 @@ public struct CommandPrintManager {
     /// Writes any buffered data to stdout.
     ///
     /// - Returns: A boolean value indicating if the action succeed.
-    @discardableResult public func flush() -> Bool {
+    @inlinable
+    @discardableResult 
+    public func flush() -> Bool {
         fflush(stdout) != 0
     }
     
