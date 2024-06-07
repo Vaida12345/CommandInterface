@@ -61,21 +61,37 @@ public extension CommandInterface {
     /// Use this the way you use `SwiftUI` views and modifiers. for example,
     ///
     /// ```swift
-    /// let value = read(.double, prompt: "Enter a value")
-    ///     .default(value: 3.14)
-    ///     .condition { $0 < 0 }
-    ///     .get()
+    /// let value = read(.double, prompt: "Enter a value", 
+    ///                  default: 3.14) { $0 < 0 }
     /// ```
     ///
-    /// For a list of modifiers, see ``CommandReadManager``.
+    /// ## Condition Modifier
+    /// Sets the condition that must meet for the read content considered succeed.
     ///
-    /// - Important: Use .``CommandReadManager/get()`` to obtain the read value.
+    /// In this example, the given text file must contain "Hello".
+    /// ```swift
+    /// self.read(.textFile, prompt: "Enter a path for text file") { content in
+    ///         content.contains("Hello")
+    ///     }
+    /// ```
+    ///
+    /// You can also provide the reason for failure using `throw`.
+    /// ```swift
+    /// self.read(.textFile, prompt: "Enter a path for text file") { content in
+    ///         guard content.contains("Hello") else {
+    ///             throw ReadError(reason: "Source not contain \"Hello\"")
+    ///             return true
+    ///         }
+    ///     }
+    /// ```
     ///
     /// - Parameters:
     ///   - contentType: The content type for reading. See ``CommandReadableContent``.
     ///   - prompt: The prompt shown to the user.
-    func read<Content>(_ contentType: CommandReadableContent<Content>, prompt: CommandPrintManager.Interpolation, terminator: String? = nil) -> CommandReadManager<Content> {
-        CommandReadManager(prompt: prompt.description, contentType: contentType)
+    func read<Content>(_ contentType: CommandReadableContent<Content>, prompt: CommandPrintManager.Interpolation, 
+                       default: Content? = nil, terminator: String? = nil,
+                       condition: ((_ content: Content) throws -> Bool)? = nil) -> Content {
+        CommandReadManager(prompt: prompt.description, contentType: contentType, defaultValue: `default`, terminator: terminator, condition: condition).get()
     }
     
     

@@ -17,8 +17,6 @@ public struct CommandReadManager<Content> {
     
     internal let condition: ((_ content: Content) throws -> Bool)?
     
-    internal let promptModifier: ((_ content: CommandPrintManager.Modifier) -> CommandPrintManager.Modifier)?
-    
     internal var contentType: CommandReadableContent<Content>
     
     internal var defaultValue: Content?
@@ -26,52 +24,55 @@ public struct CommandReadManager<Content> {
     internal var terminator: String? = nil
     
     
-    // MARK: - Modifiers
-    
-    /// Sets the condition that must meet for the read content considered succeed.
-    ///
-    /// In this example, the given text file must contain "Hello".
-    /// ```swift
-    /// self.read(.textFile, prompt: "Enter a path for text file")
-    ///     .condition { content in
-    ///         content.contains("Hello")
-    ///     }
-    ///     .get()
-    /// ```
-    ///
-    /// You can also provide the reason for failure using `throw`.
-    /// ```swift
-    /// self.read(.textFile, prompt: "Enter a path for text file")
-    ///     .condition { content in
-    ///         guard content.contains("Hello") else {
-    ///             throw ReadError(reason: "Source not contain \"Hello\"")
-    ///             return true
-    ///         }
-    ///     }
-    ///     .get()
-    /// ```
-    public func condition(_ predicate: @escaping (_ content: Content) throws -> Bool) -> CommandReadManager {
-        CommandReadManager(prompt: self.prompt, condition: predicate, promptModifier: self.promptModifier, defaultValue: self.defaultValue, contentType: self.contentType, terminator: self.terminator)
-    }
-    
-    /// The style modifier to the prompt.
-    public func promptModifier(_ modifier: @escaping (_ content: CommandPrintManager.Modifier) -> CommandPrintManager.Modifier) -> CommandReadManager {
-        CommandReadManager(prompt: self.prompt, condition: self.condition, promptModifier: modifier, defaultValue: self.defaultValue, contentType: self.contentType, terminator: self.terminator)
-    }
-    
-    /// Sets the default value. If no input was received, the default value would be used.
-    public func `default`(value: Content) -> CommandReadManager {
-        CommandReadManager(prompt: self.prompt, condition: self.condition, promptModifier: self.promptModifier, defaultValue: value, contentType: self.contentType, terminator: self.terminator)
-    }
-    
-    
     // MARK: - Internal
     
     
     
     internal func __printPrompt(prompt: String, terminator: String) {
-        let modifier = (promptModifier ?? { $0 })(.default)
-        Swift.print(modifier.modify(prompt), terminator: self.terminator ?? terminator)
+        Swift.print(prompt, terminator: self.terminator ?? terminator)
+    }
+    
+    private func __readline(printDefault: Bool) -> String? {
+        var storage = StandardInputStorage()
+        
+        if let defaultValue, printDefault {
+            let len = storage.insertAtCursor(formatted: "\(defaultValue, modifier: .dim)")
+            storage.move(to: .left, length: len)
+        }
+        
+        while let next = __consumeNext() {
+            switch next {
+            case .newline:
+                return String(storage.buffer)
+                
+            case .tab:
+                if let defaultValue, printDefault,
+                   "\(defaultValue)".hasPrefix(String(storage.buffer)),
+                   storage.cursor == storage.buffer.count || storage.buffer.isEmpty {
+                    var value = "\(defaultValue)"
+                    if !storage.buffer.isEmpty {
+                        for _ in 1...storage.cursor {
+                            value.removeFirst()
+                        }
+                    }
+                    
+                    let len = storage.insertAtCursor(value)
+                }
+                
+            case .char(let char):
+                if let defaultValue, printDefault,
+                   storage.cursor < storage.buffer.count,
+                   storage.buffer[storage.cursor] != char {
+                    storage.eraseFromCursorToEndOfLine()
+                }
+                storage.write(char)
+                
+            default:
+                storage.handle(next)
+            }
+        }
+        
+        return nil
     }
     
     private func __getLoop(prompt: String, terminator: String, printPrompt: Bool = true, body: @escaping (_ read: String) throws -> Content?) -> Content {
@@ -79,25 +80,17 @@ public struct CommandReadManager<Content> {
             __printPrompt(prompt: prompt, terminator: terminator)
         }
         
-        guard let read = Swift.readLine() else {
+        guard let read = __readline(printDefault: printPrompt && !(self.terminator ?? terminator).contains("\n")) else {
             Terminal.bell()
             Swift.print("\u{1B}[31mTry again\u{1B}[0m: ", terminator: "")
             return __getLoop(prompt: prompt, terminator: terminator, printPrompt: false, body: body)
         }
         
         if let defaultValue, read.isEmpty {
-            
-            let defaultValueModifier = CommandPrintManager.Modifier.default.foregroundColor(.secondary)
-            Swift.print(defaultValueModifier.modify("using default value: \(defaultValue)"))
-            
             return defaultValue
         }
         
         do {
-            if let condition = contentType.condition {
-                guard try condition(read) else { throw ReadError(reason: "Invalid Input.") }
-            }
-            
             guard let value = try body(read) else { throw ReadError(reason: "Invalid Input") }
             
             let condition = try condition?(value)
@@ -119,16 +112,19 @@ public struct CommandReadManager<Content> {
     /// Gets the value. This is guaranteed, as it would keep asking the user for correct input.
     public func get() -> Content {
         if let getLoop = contentType.overrideGetLoop {
-            getLoop(self, contentType)
+            return getLoop(self, contentType)
         } else {
-            __getLoop(prompt: self.prompt, terminator: self.contentType.terminator, body: self.contentType.initializer)
+            var __raw = __setRawMode(); defer { __resetTerminal(originalTerm: &__raw) }
+            
+            return __getLoop(prompt: self.prompt, terminator: self.contentType.terminator, body: self.contentType.initializer)
         }
     }
     
-    internal init(prompt: String, condition: ((_ content: Content) throws -> Bool)? = nil, promptModifier: ((_ modifier: CommandPrintManager.Modifier) -> CommandPrintManager.Modifier)? = nil, defaultValue: Content? = nil, contentType: CommandReadableContent<Content>, terminator: String? = nil) {
+    
+    internal init(prompt: String, contentType: CommandReadableContent<Content>, defaultValue: Content? = nil, terminator: String? = nil,
+                  condition: ((_ content: Content) throws -> Bool)? = nil) {
         self.prompt = prompt
         self.condition = condition
-        self.promptModifier = promptModifier
         self.contentType = contentType
         self.defaultValue = defaultValue
         self.terminator = terminator

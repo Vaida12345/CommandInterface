@@ -15,9 +15,9 @@ extension CommandPrintManager {
         /// The internal rawValue.
         public let rawValue: UInt8
         
-        private var foregroundColor: Color
+        private var foregroundColor: Color?
         
-        private var backgroundColor: Color
+        private var backgroundColor: Color?
         
         private var escaper: String {
             var lhs: Array<Int> = [] // Use array instead of set as 256 color requires order.
@@ -27,19 +27,11 @@ extension CommandPrintManager {
                 }
             }
             
-            if self.foregroundColor != .none {
-                if let code = self.foregroundColor.__256ColorCode {
-                    lhs.append(code)
-                } else {
-                    lhs.append(Int(self.foregroundColor.rawValue))
-                }
+            if let raw = self.foregroundColor?.rawValue {
+                lhs.append(Int(raw))
             }
-            if self.backgroundColor != .none {
-                if let code = self.backgroundColor.__256ColorCode {
-                    lhs.append(code + 10)
-                } else {
-                    lhs.append(Int(self.backgroundColor.rawValue))
-                }
+            if let raw = self.backgroundColor?.rawValue{
+                lhs.append(Int(raw) + 10)
             }
             
             return (lhs.unique().map(String.init).joined(separator: ";"))
@@ -138,19 +130,29 @@ extension CommandPrintManager {
             Modifier(rawValue: self.rawValue, foregroundColor: self.foregroundColor, backgroundColor: color)
         }
         
+        /// Sets the text color.
+        public static func foregroundColor(_ color: Color) -> Modifier {
+            Modifier(rawValue: 0, foregroundColor: color)
+        }
+        
+        /// Sets the text background color.
+        public static func backgroundColor(_ color: Color) -> Modifier {
+            Modifier(rawValue: 0, backgroundColor: color)
+        }
+        
         internal func modify(_ content: String) -> String {
             let escapers = self.escaper
             return "\u{1B}[\(escapers)m" + content + "\u{1B}[0m"
         }
         
-        private init(rawValue: UInt8, foregroundColor: Color = .none, backgroundColor: Color = .none) {
+        private init(rawValue: UInt8, foregroundColor: Color? = nil, backgroundColor: Color? = nil) {
             self.rawValue = rawValue
             self.foregroundColor = foregroundColor
             self.backgroundColor = backgroundColor
         }
         
         public init(rawValue: UInt8) {
-            self.init(rawValue: rawValue, foregroundColor: .none, backgroundColor: .none)
+            self.init(rawValue: rawValue, foregroundColor: nil, backgroundColor: nil)
         }
     }
     

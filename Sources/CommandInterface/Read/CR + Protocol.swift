@@ -21,10 +21,6 @@ public protocol CommandReadable {
 /// The interface for providing readable content.
 public struct CommandReadableContent<Content>: CommandReadable {
     
-    internal var contentKey: ContentKey
-    
-    internal let condition: ((String) throws -> Bool)?
-    
     internal let initializer: (String) throws -> Content?
     
     internal let terminator: String
@@ -33,7 +29,7 @@ public struct CommandReadableContent<Content>: CommandReadable {
     
     
     /// Indicates reading boolean value.
-    public static var bool: CommandReadableContent<Bool> { .init(contentKey: .boolean, terminator: " [y/n]: ") { read in
+    public static var bool: CommandReadableContent<Bool> { .init(terminator: " [y/n]: ") { read in
         switch read.lowercased() {
         case "yes", "y":
             return true
@@ -45,27 +41,27 @@ public struct CommandReadableContent<Content>: CommandReadable {
     } }
     
     /// Indicates reading file path to a text file.
-    public static var textFile: CommandReadableContent<String> { .init(contentKey: .textFile, terminator: ":\n") { read in
+    public static var textFile: CommandReadableContent<String> { .init(terminator: ":\n") { read in
         let filePath = __normalize(filePath: read)
         return try String(contentsOfFile: filePath)
     } }
     
     /// Indicates reading file path.
-    public static var filePath: CommandReadableContent<String> { .init(contentKey: .filePath, terminator: ":\n", initializer: __normalize) }
+    public static var filePath: CommandReadableContent<String> { .init(terminator: ":\n", initializer: __normalize) }
     
     /// Indicates reading string.
-    public static var string: CommandReadableContent<String> { .init(contentKey: .string, terminator: ":\n", initializer: { $0 }) }
+    public static var string: CommandReadableContent<String> { .init(terminator: ":\n", initializer: { $0 }) }
     
     /// Indicates reading int.
-    public static var int: CommandReadableContent<Int> { .init(contentKey: .int, terminator: ": ", initializer: Int.init) }
+    public static var int: CommandReadableContent<Int> { .init(terminator: ": ", initializer: Int.init) }
     
     /// Indicates reading double.
-    public static var double: CommandReadableContent<Double> { .init(contentKey: .double, terminator: ": ", initializer: Double.init) }
+    public static var double: CommandReadableContent<Double> { .init(terminator: ": ", initializer: Double.init) }
     
     /// Indicates reading a file path that forms a FinderItem.
-    public static var finderItem: CommandReadableContent<FinderItem> { .init(contentKey: .finderItem, terminator: ":\n") { FinderItem(at: __normalize(filePath: $0)) } }
+    public static var finderItem: CommandReadableContent<FinderItem> { .init(terminator: ":\n") { FinderItem(at: __normalize(filePath: $0)) } }
     
-    public static func options<Option>(from options: Option.Type) -> CommandReadableContent<Option> where Option: RawRepresentable & CaseIterable, Option.RawValue == String { .init(contentKey: .options, terminator: ": ") { read in
+    public static func options<Option>(from options: Option.Type) -> CommandReadableContent<Option> where Option: RawRepresentable & CaseIterable, Option.RawValue == String { .init(terminator: ": ") { read in
         guard let option = Option(rawValue: read) else { throw ReadError(reason: "Invalid Input: Input not in acceptable set") }
         return option
     } overrideGetLoop: { manager, content in
@@ -77,25 +73,15 @@ public struct CommandReadableContent<Content>: CommandReadable {
         return content.__optionsGetLoop(manager: manager)
     } }
     
-    
-    private init(contentKey: ContentKey, terminator: String, condition: ((String) throws -> Bool)? = nil, initializer: @escaping (String) throws -> Content?, overrideGetLoop: ((_ manager: CommandReadManager<Content>, _ content: CommandReadableContent<Content>) -> Content)? = nil) {
-        self.contentKey = contentKey
-        self.terminator = terminator
-        self.condition = condition
-        self.initializer = initializer
-        self.overrideGetLoop = overrideGetLoop
+    public static func customized(initializer: @escaping (String) throws -> Content?) -> CommandReadableContent<Content> {
+        .init(terminator: ": ", initializer: initializer)
     }
     
     
-    internal enum ContentKey: String {
-        case boolean
-        case textFile
-        case filePath
-        case string
-        case int
-        case double
-        case finderItem
-        case options
+    private init(terminator: String, initializer: @escaping (String) throws -> Content?, overrideGetLoop: ((_ manager: CommandReadManager<Content>, _ content: CommandReadableContent<Content>) -> Content)? = nil) {
+        self.terminator = terminator
+        self.initializer = initializer
+        self.overrideGetLoop = overrideGetLoop
     }
     
     private func __askToChoose<Option>(from options: Array<Option>) -> String? where Option: RawRepresentable, Option.RawValue == String {
@@ -196,17 +182,13 @@ public struct CommandReadableContent<Content>: CommandReadable {
         
         if let defaultValue = manager.defaultValue, option.isEmpty {
             
-            let defaultValueModifier = CommandPrintManager.Modifier.default.foregroundColor(.secondary)
+            let defaultValueModifier = CommandPrintManager.Modifier.default.dim()
             Swift.print(defaultValueModifier.modify("using default value: \(defaultValue)"))
             
             return defaultValue
         }
         
         do {
-            if let condition = manager.contentType.condition {
-                guard try condition(option) else { throw ReadError(reason: "Invalid Input.") }
-            }
-            
             guard let value = try self.initializer(option) else { throw ReadError(reason: "Invalid Input.") }
             
             let condition = try manager.condition?(value)

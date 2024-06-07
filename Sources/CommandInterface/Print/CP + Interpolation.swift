@@ -16,6 +16,8 @@ extension CommandPrintManager {
         
         private var value: String
         
+        internal var raw: String
+        
         public var description: String {
             self.value
         }
@@ -23,6 +25,7 @@ extension CommandPrintManager {
         public init(literalCapacity: Int, interpolationCount: Int) {
             self.value = String()
             self.value.reserveCapacity(literalCapacity)
+            self.raw = String()
         }
         
         public init(stringInterpolation: CommandPrintManager.Interpolation) {
@@ -31,19 +34,23 @@ extension CommandPrintManager {
         
         public init(stringLiteral value: String) {
             self.value = value
+            self.raw = value
         }
         
         
         public mutating func appendLiteral(_ literal: String) {
             self.value += literal
+            self.raw += literal
         }
         
         public mutating func appendInterpolation<T>(_ value: T) where T: CustomStringConvertible {
             self.value += value.description
+            self.raw += value.description
         }
         
         public mutating func appendInterpolation<T>(_ value: T) {
             self.value += String(describing: value)
+            self.raw += String(describing: value)
         }
         
         public mutating func appendInterpolation(_ value: FinderItem) {
@@ -52,10 +59,12 @@ extension CommandPrintManager {
         
         public mutating func appendInterpolation<T>(_ value: T, modifier: CommandPrintManager.Modifier) {
             self.value += modifier.modify(String(describing: value))
+            self.raw += String(describing: value)
         }
         
         public mutating func write(_ string: String) {
             self.value += string
+            self.raw += string
         }
         
         public typealias StringLiteralType = String

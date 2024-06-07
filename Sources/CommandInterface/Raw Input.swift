@@ -31,10 +31,7 @@ public enum NextChar: Equatable {
 /// - Note: You need to `fflush` to push output.
 ///
 /// ```swift
-/// var __raw = __setRawMode()
-/// defer {
-///     __resetTerminal(originalTerm: &__raw)
-/// }
+/// var __raw = __setRawMode(); defer { __resetTerminal(originalTerm: &__raw) }
 /// ```
 @inlinable
 public func __consumeNext() -> NextChar? {
@@ -163,6 +160,12 @@ public struct StandardInputStorage {
         return nil
     }
     
+    public mutating func move(to direction: Direction, length: Int) {
+        for _ in 1...length {
+            move(to: direction)
+        }
+    }
+    
     /// Delete the value right before the cursor, which is the normal use of delete.
     @inlinable
     public mutating func deleteBeforeCursor() {
@@ -178,7 +181,12 @@ public struct StandardInputStorage {
     
     @inlinable
     public mutating func insertAtCursor(_ value: Character) {
-        print("\(Terminal.escape)[@\(value)", terminator: "")
+        if cursor == buffer.count {
+            print(value, terminator: "")
+        } else {
+            print("\(Terminal.escape)[@\(value)", terminator: "")
+        }
+        
         fflush(stdout);
         
         buffer.insert(value, at: cursor)
@@ -186,9 +194,72 @@ public struct StandardInputStorage {
     }
     
     @inlinable
-    public mutating func insertAtCursor(_ value: String) {
+    public mutating func write(_ value: Character) {
+        print(value, terminator: "")
+        
+        fflush(stdout);
+        
+        if cursor < buffer.count {
+            buffer.remove(at: cursor)
+        }
+        buffer.insert(value, at: cursor)
+        cursor += 1
+    }
+    
+    @inlinable
+    public mutating func write(_ value: String) {
         for char in value {
-            self.insertAtCursor(char)
+            self.write(char)
+        }
+    }
+    
+    @inlinable
+    @discardableResult
+    public mutating func insertAtCursor(_ value: String) -> Int {
+        if cursor == buffer.count {
+            print(value, terminator: "")
+            fflush(stdout);
+            
+            buffer.append(contentsOf: value)
+            cursor += value.count
+        } else {
+            for char in value {
+                self.insertAtCursor(char)
+            }
+        }
+        
+        return buffer.count
+    }
+    
+    public mutating func eraseFromCursorToEndOfLine() {
+        let pos = self.cursor
+        seekToEnd()
+        
+        while self.cursor > pos {
+            self.deleteBeforeCursor()
+        }
+    }
+    
+    public mutating func seekToEnd() {
+        while self.cursor < self.buffer.count {
+            move(to: .right)
+        }
+    }
+    
+    
+    /// If the cursor is not at the end of buffer, the format will not be applied.
+    @discardableResult
+    public mutating func insertAtCursor(formatted item: CommandPrintManager.Interpolation) -> Int {
+        if cursor == buffer.count {
+            print(item.description, terminator: "")
+            fflush(stdout);
+            
+            buffer.append(contentsOf: item.raw)
+            cursor += item.raw.count
+            return item.raw.count
+        } else {
+            self.insertAtCursor(item.raw)
+            return item.raw.count
         }
     }
     
@@ -215,7 +286,7 @@ public struct StandardInputStorage {
         case .left:
             move(to: .left)
         case .tab:
-            insertAtCursor("\t")
+            insertAtCursor(" ")
         case .newline:
             insertAtCursor("\n")
         case .delete:
@@ -223,7 +294,7 @@ public struct StandardInputStorage {
         case .char(let character):
             insertAtCursor(character)
         case .escape(let character):
-            insertAtCursor(Terminal.escape)
+            insertAtCursor("\(Terminal.escape)[\(character)")
         case .badSymbol:
             break
         case .empty:
