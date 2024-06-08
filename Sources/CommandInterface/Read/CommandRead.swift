@@ -28,11 +28,12 @@ public struct CommandReadManager<Content> {
     
     
     
-    internal func __printPrompt(prompt: String, terminator: String) {
-        Swift.print(prompt, terminator: self.terminator ?? terminator)
+    internal func __printPrompt() {
+        Swift.print(self.prompt, terminator: self.terminator ?? self.contentType.terminator)
+        fflush(stdout)
     }
     
-    private func __readline(printDefault: Bool) -> String? {
+    func __readline(printDefault: Bool) -> StandardInputStorage? {
         var storage = StandardInputStorage()
         
         if let defaultValue, printDefault {
@@ -43,7 +44,9 @@ public struct CommandReadManager<Content> {
         while let next = __consumeNext() {
             switch next {
             case .newline:
-                return String(storage.buffer)
+                Swift.print("\n", terminator: "")
+                fflush(stdout)
+                return storage
                 
             case .tab:
                 if let defaultValue, printDefault,
@@ -55,12 +58,10 @@ public struct CommandReadManager<Content> {
                             value.removeFirst()
                         }
                     }
-                    
-                    let len = storage.insertAtCursor(value)
                 }
                 
             case .char(let char):
-                if let defaultValue, printDefault,
+                if defaultValue != nil, printDefault,
                    storage.cursor < storage.buffer.count,
                    storage.buffer[storage.cursor] != char {
                     storage.eraseFromCursorToEndOfLine()
@@ -75,15 +76,16 @@ public struct CommandReadManager<Content> {
         return nil
     }
     
-    private func __getLoop(prompt: String, terminator: String, printPrompt: Bool = true, body: @escaping (_ read: String) throws -> Content?) -> Content {
+    private func __getLoop(printPrompt: Bool = true, body: @escaping (_ read: String) throws -> Content?) -> Content {
         if printPrompt {
-            __printPrompt(prompt: prompt, terminator: terminator)
+            __printPrompt()
         }
         
-        guard let read = __readline(printDefault: printPrompt && !(self.terminator ?? terminator).contains("\n")) else {
+        guard let read = __readline(printDefault: printPrompt && !(self.terminator ?? contentType.terminator).contains("\n"))?.get() else {
             Terminal.bell()
             Swift.print("\u{1B}[31mTry again\u{1B}[0m: ", terminator: "")
-            return __getLoop(prompt: prompt, terminator: terminator, printPrompt: false, body: body)
+            fflush(stdout)
+            return __getLoop(printPrompt: false, body: body)
         }
         
         if let defaultValue, read.isEmpty {
@@ -104,19 +106,18 @@ public struct CommandReadManager<Content> {
                 print("\u{1B}[31m" + (error as NSError).localizedDescription + "\u{1B}[0m")
             }
             Swift.print("\u{1B}[31mTry again: \u{1B}[0m", terminator: "")
+            fflush(stdout)
             
-            return __getLoop(prompt: prompt, terminator: terminator, printPrompt: false, body: body)
+            return __getLoop(printPrompt: false, body: body)
         }
     }
     
     /// Gets the value. This is guaranteed, as it would keep asking the user for correct input.
     public func get() -> Content {
         if let getLoop = contentType.overrideGetLoop {
-            return getLoop(self, contentType)
+            getLoop(self, contentType)
         } else {
-            var __raw = __setRawMode(); defer { __resetTerminal(originalTerm: &__raw) }
-            
-            return __getLoop(prompt: self.prompt, terminator: self.contentType.terminator, body: self.contentType.initializer)
+            __getLoop(body: self.contentType.initializer)
         }
     }
     
@@ -159,35 +160,4 @@ extension CommandReadManager: CustomStringConvertible where Content: CustomStrin
         self.get().description
     }
     
-}
-
-
-func __normalize(filePath: String) -> String {
-    (filePath.hasSuffix(" ") ? String(filePath.dropLast()) : filePath)
-        .replacingOccurrences(of: "\\ ", with: " ")
-        .replacingOccurrences(of: "\\(", with: "(")
-        .replacingOccurrences(of: "\\)", with: ")")
-        .replacingOccurrences(of: "\\[", with: "[")
-        .replacingOccurrences(of: "\\]", with: "]")
-        .replacingOccurrences(of: "\\{", with: "{")
-        .replacingOccurrences(of: "\\}", with: "}")
-        .replacingOccurrences(of: "\\`", with: "`")
-        .replacingOccurrences(of: "\\~", with: "~")
-        .replacingOccurrences(of: "\\!", with: "!")
-        .replacingOccurrences(of: "\\@", with: "@")
-        .replacingOccurrences(of: "\\#", with: "#")
-        .replacingOccurrences(of: "\\$", with: "$")
-        .replacingOccurrences(of: "\\%", with: "%")
-        .replacingOccurrences(of: "\\&", with: "&")
-        .replacingOccurrences(of: "\\*", with: "*")
-        .replacingOccurrences(of: "\\=", with: "=")
-        .replacingOccurrences(of: "\\|", with: "|")
-        .replacingOccurrences(of: "\\;", with: ";")
-        .replacingOccurrences(of: "\\\"", with: "\"")
-        .replacingOccurrences(of: "\\\'", with: "\'")
-        .replacingOccurrences(of: "\\<", with: "<")
-        .replacingOccurrences(of: "\\>", with: ">")
-        .replacingOccurrences(of: "\\,", with: ",")
-        .replacingOccurrences(of: "\\?", with: "?")
-        .replacingOccurrences(of: "\\\\", with: "\\")
 }

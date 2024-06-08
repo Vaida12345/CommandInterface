@@ -11,7 +11,7 @@ import ArgumentParser
 
 
 /// The protocol whose conforming types serve as entry points.
-public protocol CommandInterface: ParsableCommand {
+public protocol CommandInterface {
     
     
 }
@@ -41,6 +41,7 @@ public extension CommandInterface {
         } else {
             Swift.print(item.description, terminator: terminator)
         }
+        fflush(stdout)
     }
     
     /// Prints the target value.
@@ -54,6 +55,7 @@ public extension CommandInterface {
         } else {
             Swift.print(result, terminator: terminator)
         }
+        fflush(stdout)
     }
     
     /// Reads a value from stdin.
@@ -88,10 +90,13 @@ public extension CommandInterface {
     /// - Parameters:
     ///   - contentType: The content type for reading. See ``CommandReadableContent``.
     ///   - prompt: The prompt shown to the user.
-    func read<Content>(_ contentType: CommandReadableContent<Content>, prompt: CommandPrintManager.Interpolation, 
+    ///   - default: The default value
+    ///   - terminator: The terminator, which will not be formatted
+    ///   - condition: The condition that will be matched against.
+    func read<Content>(_ contentType: CommandReadableContent<Content>, prompt: CommandPrintManager.Interpolation,
                        default: Content? = nil, terminator: String? = nil,
                        condition: ((_ content: Content) throws -> Bool)? = nil) -> Content {
-        CommandReadManager(prompt: prompt.description, contentType: contentType, defaultValue: `default`, terminator: terminator, condition: condition).get()
+        CommandReadManager(prompt: prompt.description, contentType: contentType, defaultValue: `default`, terminator: terminator, condition: contentType.condition ?? condition).get()
     }
     
     

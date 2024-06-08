@@ -30,6 +30,7 @@ public struct Terminal {
     @inlinable
     public static func bell() {
         print("\u{7}", terminator: "")
+        fflush(stdout);
     }
     
     /// Clear the current line on which the cursor is on.
@@ -45,6 +46,7 @@ public struct Terminal {
     public static func clearLine() {
         print("\(escape)[2K", terminator: "")
         print("\(escape)[0G", terminator: "")
+        fflush(stdout);
     }
     
     /// Clear the previous line on which the cursor is on.
@@ -61,6 +63,7 @@ public struct Terminal {
         print("\(escape)[1F", terminator: "") // one line up, to beginning
         print("\(escape)[0K", terminator: "") // erase til end of line
         print("\(escape)[0G", terminator: "") // reset cursor
+        fflush(stdout);
     }
     
     /// Erase entire screen.
@@ -68,21 +71,25 @@ public struct Terminal {
     public static func clearScreen() {
         print("\(escape)[2J", terminator: "")
         Cursor.moveToHome()
+        fflush(stdout);
     }
     
     @inlinable
     public static func eraseFromCursorToEndOfLine() {
         print("\(escape)[0K", terminator: "")
+        fflush(stdout);
     }
     
     @inlinable
     public static func eraseFromStartOfLineToCursor() {
         print("\(escape)[1K", terminator: "")
+        fflush(stdout);
     }
     
     @inlinable
     public static func insertAtCursor(_ value: String) {
         print("\(escape)[@\(value)", terminator: "")
+        fflush(stdout);
     }
     
 }

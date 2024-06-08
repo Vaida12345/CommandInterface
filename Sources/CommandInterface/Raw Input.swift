@@ -29,11 +29,6 @@ public enum NextChar: Equatable {
 /// To use this, you must define the following in the function in which this is called.
 ///
 /// - Note: You need to `fflush` to push output.
-///
-/// ```swift
-/// var __raw = __setRawMode(); defer { __resetTerminal(originalTerm: &__raw) }
-/// ```
-@inlinable
 public func __consumeNext() -> NextChar? {
     
     let inputHandle = FileHandle.standardInput
@@ -143,7 +138,6 @@ public struct StandardInputStorage {
             if cursor > 0 {
                 let len = min(buffer[cursor - 1].utf8.count, 2)
                 Cursor.move(toLeft: len)
-                fflush(stdout);
                 cursor -= 1
                 return len
             }
@@ -151,7 +145,6 @@ public struct StandardInputStorage {
             if cursor < buffer.count {
                 let len = min(buffer[cursor].utf8.count, 2)
                 Cursor.move(toRight: len)
-                fflush(stdout);
                 cursor += 1
                 return len
             }
@@ -160,10 +153,16 @@ public struct StandardInputStorage {
         return nil
     }
     
+    @inlinable
     public mutating func move(to direction: Direction, length: Int) {
         for _ in 1...length {
             move(to: direction)
         }
+    }
+    
+    @inlinable
+    public func get() -> String {
+        String(self.buffer)
     }
     
     /// Delete the value right before the cursor, which is the normal use of delete.
@@ -196,7 +195,6 @@ public struct StandardInputStorage {
     @inlinable
     public mutating func write(_ value: Character) {
         print(value, terminator: "")
-        
         fflush(stdout);
         
         if cursor < buffer.count {
@@ -211,6 +209,19 @@ public struct StandardInputStorage {
         for char in value {
             self.write(char)
         }
+    }
+    
+    
+    public mutating func write(formatted item: CommandPrintManager.Interpolation) -> Int {
+        print(item.description, terminator: "")
+        fflush(stdout);
+        
+        for _ in cursor..<min(buffer.count, item.raw.count + cursor) {
+            buffer.remove(at: cursor)
+        }
+        buffer.insert(contentsOf: item.raw, at: cursor)
+        cursor += item.raw.count
+        return item.raw.count
     }
     
     @inlinable
@@ -247,9 +258,9 @@ public struct StandardInputStorage {
     }
     
     
-    /// If the cursor is not at the end of buffer, the format will not be applied.
     @discardableResult
     public mutating func insertAtCursor(formatted item: CommandPrintManager.Interpolation) -> Int {
+        guard !item.raw.isEmpty else { return 0 }
         if cursor == buffer.count {
             print(item.description, terminator: "")
             fflush(stdout);
@@ -258,20 +269,30 @@ public struct StandardInputStorage {
             cursor += item.raw.count
             return item.raw.count
         } else {
-            self.insertAtCursor(item.raw)
-            return item.raw.count
+            let place = item.raw.count
+            // allocate space
+            self.insertAtCursor(String(repeating: " ", count: place))
+            // move back
+            self.move(to: .left, length: place)
+            // write
+            return self.write(formatted: item)
         }
     }
     
     /// Clear entered values as recorded by `self`.
     @inlinable
-    public mutating func clearEntered() {
-        // rotate to start
-        while cursor > 0 {
-            self.move(to: .left)
+    @discardableResult
+    public mutating func clearEntered() -> String {
+        defer {
+            // rotate to end
+            while cursor < self.buffer.count {
+                self.move(to: .right)
+            }
+            while cursor > 0 {
+                self.deleteBeforeCursor()
+            }
         }
-        Terminal.eraseFromCursorToEndOfLine()
-        buffer.removeAll()
+        return String(buffer)
     }
     
     @inlinable

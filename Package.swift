@@ -15,6 +15,7 @@ let package = Package (
     ], targets: [
         .target(name: "CommandInterface", dependencies: ["Stratum", .product(name: "ArgumentParser", package: "swift-argument-parser"), "CICComponent"]),
         .testTarget(name: "CommandInterfaceTests", dependencies: ["CommandInterface"]),
-        .target(name: "CICComponent")
+        .target(name: "CICComponent"),
+        .executableTarget(name: "Client", dependencies: ["CommandInterface"])
     ]
 )

@@ -20,6 +20,7 @@ public struct Cursor {
     @inlinable
     public static func moveToHome() {
         print("\(escape)[H", terminator: "")
+        fflush(stdout);
     }
     
     /// moves cursor to column `toColumn` within the same line.
@@ -34,6 +35,7 @@ public struct Cursor {
     @inlinable
     public static func move(toColumn: Int) {
         print("\(escape)[\(toColumn)G", terminator: "")
+        fflush(stdout);
     }
     
     @inlinable
@@ -43,6 +45,7 @@ public struct Cursor {
         } else if toRight < 0 {
             print("\(escape)[\(abs(toRight))D", terminator: "")
         }
+        fflush(stdout);
     }
     
     @inlinable
@@ -63,6 +66,7 @@ public struct Cursor {
     @inlinable
     public static func moveTo(line: Int, column: Int) {
         print("\(escape)[\(line);\(column)f", terminator: "")
+        fflush(stdout);
     }
     
 }
