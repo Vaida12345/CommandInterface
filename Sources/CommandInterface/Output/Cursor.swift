@@ -7,6 +7,7 @@
 
 import Foundation
 import CICComponent
+import RegexBuilder
 
 
 public struct Cursor {
@@ -55,11 +56,39 @@ public struct Cursor {
     
     
     @inlinable
-    static func currentPosition() throws -> (line: Int, column: Int) {
-        var x: Int32 = 0
-        var y: Int32 = 0
-        get_pos(&x, &y)
-        return (Int(x), Int(y))
+    public static func currentPosition() -> (line: Int, column: Int) {
+        write(STDOUT_FILENO, "\(Terminal.escape)[6n", 4)
+        
+        var buffer = ""
+        
+        var char: UInt8 = 0
+        while char != Character("R").asciiValue! {
+            read(STDIN_FILENO, &char, 1)
+            buffer.append(Character(UnicodeScalar(char)))
+        }
+        
+        let regex = Regex {
+            "\u{1B}["
+            
+            Capture {
+                /\d+/
+            } transform: {
+                Int($0)!
+            }
+            
+            ";"
+            
+            Capture {
+                /\d+/
+            } transform: {
+                Int($0)!
+            }
+            
+            "R"
+        }
+        
+        let match = try! regex.wholeMatch(in: buffer)!
+        return (match.output.1, match.output.2)
     }
     
     /// Note that line and column starts with `1`.
@@ -67,6 +96,28 @@ public struct Cursor {
     public static func moveTo(line: Int, column: Int) {
         print("\(escape)[\(line);\(column)f", terminator: "")
         fflush(stdout);
+    }
+    
+    /// Move up, and to the beginning of the line.
+    @inlinable
+    public static func moveUp(line: Int) {
+        if line < 0 {
+            self.moveDown(line: abs(line))
+        } else if line > 0 {
+            print("\(escape)[\(line)F", terminator: "")
+            fflush(stdout);
+        }
+    }
+    
+    // Move up, and to the beginning of the line.
+    @inlinable
+    public static func moveDown(line: Int) {
+        if line < 0 {
+            self.moveUp(line: abs(line))
+        } else if line > 0 {
+            print("\(escape)[\(line)E", terminator: "")
+            fflush(stdout);
+        }
     }
     
 }

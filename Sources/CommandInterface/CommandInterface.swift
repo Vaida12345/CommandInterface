@@ -64,7 +64,7 @@ public extension CommandInterface {
     ///
     /// ```swift
     /// let value = read(.double, prompt: "Enter a value", 
-    ///                  default: 3.14) { $0 < 0 }
+    ///                  default: 3.14) { $0 > 0 }
     /// ```
     ///
     /// ## Condition Modifier
@@ -73,30 +73,27 @@ public extension CommandInterface {
     /// In this example, the given text file must contain "Hello".
     /// ```swift
     /// self.read(.textFile, prompt: "Enter a path for text file") { content in
-    ///         content.contains("Hello")
-    ///     }
+    ///     content.contains("Hello")
+    /// }
     /// ```
     ///
     /// You can also provide the reason for failure using `throw`.
     /// ```swift
     /// self.read(.textFile, prompt: "Enter a path for text file") { content in
-    ///         guard content.contains("Hello") else {
-    ///             throw ReadError(reason: "Source not contain \"Hello\"")
-    ///             return true
-    ///         }
+    ///     guard content.contains("Hello") else {
+    ///         throw ReadError(reason: "Source not contain \"Hello\"")
+    ///         return true
     ///     }
+    /// }
     /// ```
     ///
     /// - Parameters:
     ///   - contentType: The content type for reading. See ``CommandReadableContent``.
     ///   - prompt: The prompt shown to the user.
-    ///   - default: The default value
-    ///   - terminator: The terminator, which will not be formatted
     ///   - condition: The condition that will be matched against.
     func read<Content>(_ contentType: CommandReadableContent<Content>, prompt: CommandPrintManager.Interpolation,
-                       default: Content? = nil, terminator: String? = nil,
                        condition: ((_ content: Content) throws -> Bool)? = nil) -> Content {
-        CommandReadManager(prompt: prompt.description, contentType: contentType, defaultValue: `default`, terminator: terminator, condition: contentType.condition ?? condition).get()
+        CommandReadManager(prompt: prompt.description, contentType: contentType, condition: contentType.condition ?? condition).get()
     }
     
     

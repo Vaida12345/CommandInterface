@@ -10,116 +10,34 @@ import Foundation
 
 extension CommandReadableContent where Content: RawRepresentable & CaseIterable, Content.RawValue == String {
     
-    public static func options(from options: Content.Type) -> CommandReadableContent<Content> { .init(terminator: ": ") { read in
+    public static func options(from options: Content.Type) -> CommandReadableContent<Content> { .init { read in
         guard let option = Content(rawValue: read) else { throw ReadError(reason: "Invalid Input: Input not in acceptable set") }
         return option
     } overrideGetLoop: { manager, content in
-        content.__optionsGetLoop(manager: manager, shouldPrintPrompt: true)
+        content.__optionsGetLoop(manager: manager, shouldPrintPrompt: true, option: Content.self)
     } }
     
-    private func __askToChoose<Option>(from options: Array<Option>) -> String? where Option: RawRepresentable, Option.RawValue == String {
-        
-        var storage = StandardInputStorage()
-        
-        var rotate = 0
-        func rotateUp() {
-            rotate += options.count - 1
-            rotate = rotate % options.count
-        }
-        func rotateDown() {
-            rotate += 1
-            rotate = rotate % options.count
-        }
-        var showInitial = false
-        
-        var matchingRotate = 0
-        var matching: [String] {
-            options.map(\.rawValue).filter { $0.hasPrefix(String(__buffer)) }
-        }
-        func rotateMatchingDown() {
-            matchingRotate += 1
-            matchingRotate = matchingRotate % matching.count
-        }
-        
-        var lastInput: NextChar? = nil
-        var __buffer: [Character] = []
-        
-        while let key = __consumeNext() {
-            switch key {
-            case .up: // Up arrow, rotate
-                if !showInitial {
-                    showInitial = true
-                } else {
-                    rotateUp()
-                }
-                
-                storage.clearEntered()
-                storage.insertAtCursor(options[rotate].rawValue)
-            case .down: // Down arrow, rotate
-                if !showInitial {
-                    showInitial = true
-                } else {
-                    rotateDown()
-                }
-                
-                storage.clearEntered()
-                storage.insertAtCursor(options[rotate].rawValue)
-            case .right: // Right arrow, do nothing
-                storage.move(to: .right)
-            case .left: // Left arrow, do nothing
-                storage.move(to: .left)
-            case .tab: // Tab key
-                       //            print("    ", terminator: "")
-                       //
-                       //            buffer.append(contentsOf: "    ")
-                       //            cursor += 4
-                if lastInput != .tab {
-                    __buffer = storage.buffer
-                } else {
-                    rotateMatchingDown()
-                }
-                guard !matching.isEmpty else { continue }
-                let match = matching[matchingRotate]
-                storage.clearEntered()
-                
-                storage.insertAtCursor(match)
-            case .newline: // Enter key
-                print("\n", terminator: "")
-                
-                return String(storage.buffer)
-            case .delete: // Backspace key
-                storage.deleteBeforeCursor()
-            case .char(let value): // Other characters
-                storage.insertAtCursor(value)
-            default:
-                continue
-            }
-            
-            fflush(stdout);
-            lastInput = key
-        }
-        
-        return nil
-    }
     
-    
-    private func __optionsGetLoop(manager: CommandReadManager<Content>, shouldPrintPrompt: Bool) -> Content {
+    private func __optionsGetLoop<Option>(manager: CommandReadManager<Content>, shouldPrintPrompt: Bool, option: Option.Type) -> Content where Option: RawRepresentable & CaseIterable, Option.RawValue == String {
         if shouldPrintPrompt {
             manager.__printPrompt()
         }
         
-        guard let option = __askToChoose(from: Array(Content.allCases)) else {
+        var defaultValueLiteral: String? {
+            if let defaultValue = manager.contentType.defaultValue, shouldPrintPrompt {
+                return manager.contentType.formatter?(defaultValue) ?? "\(defaultValue)"
+            }
+            return nil
+        }
+        
+        guard let option = CommandReadableContent<String>.unboundedOptions(from: Content.self).__askToChoose(from: Option.allCases.map(\.rawValue), defaultValueLiteral: defaultValueLiteral) else {
             Terminal.bell()
             Swift.print("\u{1B}[31mTry again\u{1B}[0m: ", terminator: "")
             fflush(stdout)
-            return __optionsGetLoop(manager: manager, shouldPrintPrompt: false)
+            return __optionsGetLoop(manager: manager, shouldPrintPrompt: false, option: Option.self)
         }
         
-        if let defaultValue = manager.defaultValue, option.isEmpty {
-            
-            let defaultValueModifier = CommandPrintManager.Modifier.default.dim()
-            Swift.print(defaultValueModifier.modify("using default value: \(defaultValue)"))
-            
+        if let defaultValue = manager.contentType.defaultValue, option.isEmpty {
             return defaultValue
         }
         
@@ -139,7 +57,7 @@ extension CommandReadableContent where Content: RawRepresentable & CaseIterable,
             Swift.print("\u{1B}[31mTry again: \u{1B}[0m", terminator: "")
             fflush(stdout)
             
-            return __optionsGetLoop(manager: manager, shouldPrintPrompt: false)
+            return __optionsGetLoop(manager: manager, shouldPrintPrompt: false, option: Option.self)
         }
     }
     

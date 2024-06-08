@@ -19,20 +19,12 @@ get_pos(int *y, int *x) {
     
     *y = 0; *x = 0;
     
-    struct termios term, restore;
-    
-    tcgetattr(0, &term);
-    tcgetattr(0, &restore);
-    term.c_lflag &= ~(ICANON|ECHO);
-    tcsetattr(0, TCSANOW, &term);
-    
     write(1, "\033[6n", 4);
     
     for( i = 0, ch = 0; ch != 'R'; i++ )
     {
         ret = (int)read(0, &ch, 1);
         if ( !ret ) {
-            tcsetattr(0, TCSANOW, &restore);
             fprintf(stderr, "getpos: error reading response!\n");
             return 1;
         }
@@ -40,7 +32,6 @@ get_pos(int *y, int *x) {
     }
     
     if (i < 2) {
-        tcsetattr(0, TCSANOW, &restore);
         fprintf(stderr, "i < 2\n");
         return(1);
     }
@@ -51,6 +42,5 @@ get_pos(int *y, int *x) {
     for( i-- , pow = 1; buf[i] != '['; i--, pow *= 10)
         *y = *y + ( buf[i] - '0' ) * pow;
     
-    tcsetattr(0, TCSANOW, &restore);
     return 0;
 }

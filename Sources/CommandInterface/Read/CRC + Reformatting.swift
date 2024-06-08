@@ -12,7 +12,7 @@ import Stratum
 extension CommandReadableContent where Content == String {
     
     public static func reformattingString(formatter: @escaping (String) -> CommandPrintManager.Interpolation) -> CommandReadableContent {
-        .init(terminator: ": ", initializer: { $0 }) { manager, content in
+        .init(initializer: { $0 }) { manager, content in
             content.__getLoop(manager: manager, printPrompt: true, formatter: formatter)
         }
     }
@@ -20,7 +20,14 @@ extension CommandReadableContent where Content == String {
     func __readline(printDefault: Bool, manager: CommandReadManager<Content>, formatter: (String) -> CommandPrintManager.Interpolation) -> StandardInputStorage? {
         var storage = StandardInputStorage()
         
-        if let defaultValue = manager.defaultValue, printDefault {
+        var defaultValueLiteral: String? {
+            if let defaultValue = manager.contentType.defaultValue, printDefault {
+                return manager.contentType.formatter?(defaultValue) ?? "\(defaultValue)"
+            }
+            return nil
+        }
+        
+        if let defaultValue = defaultValueLiteral {
             let len = storage.insertAtCursor(formatted: "\(defaultValue, modifier: .dim)")
             storage.move(to: .left, length: len)
         }
@@ -33,19 +40,20 @@ extension CommandReadableContent where Content == String {
                 return storage
                 
             case .tab:
-                if let defaultValue = manager.defaultValue, printDefault,
-                   "\(defaultValue)".hasPrefix(String(storage.buffer)),
+                if let defaultValue = defaultValueLiteral,
+                   defaultValue.hasPrefix(String(storage.buffer)),
                    storage.cursor == storage.buffer.count || storage.buffer.isEmpty {
-                    var value = "\(defaultValue)"
+                    var value = defaultValue
                     if !storage.buffer.isEmpty {
                         for _ in 1...storage.cursor {
                             value.removeFirst()
                         }
                     }
+                    storage.insertAtCursor(value)
                 }
                 
             case .char(let char):
-                if manager.defaultValue != nil, printDefault,
+                if manager.contentType.defaultValue != nil, printDefault,
                    storage.cursor < storage.buffer.count,
                    storage.buffer[storage.cursor] != char {
                     storage.eraseFromCursorToEndOfLine()
@@ -56,7 +64,7 @@ extension CommandReadableContent where Content == String {
                 storage.handle(next)
             }
             
-            if next != .left && next != .right {
+            if next != .left && next != .right && next != .delete {
                 let contents = storage.clearEntered()
                 storage.insertAtCursor(formatted: formatter(contents))
                 //            Swift.print(contents.replacingOccurrences(of: "\\", with: ""), terminator: "")
@@ -74,14 +82,14 @@ extension CommandReadableContent where Content == String {
             manager.__printPrompt()
         }
         
-        guard let read = __readline(printDefault: printPrompt && !self.terminator.contains("\n"), manager: manager, formatter: formatter) else {
+        guard let read = __readline(printDefault: printPrompt && !manager.prompt.hasSuffix("\n"), manager: manager, formatter: formatter) else {
             Terminal.bell()
             Swift.print("\u{1B}[31mTry again\u{1B}[0m: ", terminator: "")
             fflush(stdout)
             return __getLoop(manager: manager, printPrompt: false, formatter: formatter)
         }
         
-        if let defaultValue = manager.defaultValue, read.buffer.isEmpty {
+        if let defaultValue = manager.contentType.defaultValue, read.buffer.isEmpty {
             return defaultValue
         }
         

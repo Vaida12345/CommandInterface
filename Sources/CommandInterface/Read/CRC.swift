@@ -15,45 +15,49 @@ public struct CommandReadableContent<Content> {
     
     internal let initializer: (String) throws -> Content?
     
-    internal let terminator: String
-    
     internal let overrideGetLoop: ((_ manager: CommandReadManager<Content>, _ content: CommandReadableContent<Content>) -> Content)?
     
     internal let condition: ((Content) throws -> Bool)?
     
+    internal let defaultValue: Content?
+    
+    internal let formatter: ((Content) -> String)?
+    
     
     /// Indicates reading boolean value.
-    public static var bool: CommandReadableContent<Bool> { .init(terminator: " [y/n]: ") { read in
+    public static var bool: CommandReadableContent<Bool> { .init { read in
         switch read.lowercased() {
-        case "yes", "y":
+        case "yes", "y", "true":
             return true
-        case "no", "n":
+        case "no", "n", "false":
             return false
         default:
             return nil
         }
+    } formatter: {
+        $0 ? "yes" : "no"
     } }
     
     /// Indicates reading file path to a text file.
-    public static var textFile: CommandReadableContent<String> { .init(terminator: ":\n") { read in
+    public static var textFile: CommandReadableContent<String> { .init { read in
         let filePath = FinderItem.normalize(shellPath: read)
         return try String(contentsOfFile: filePath)
     } }
     
     /// Indicates reading file path.
-    public static var filePath: CommandReadableContent<String> { .init(terminator: ":\n", initializer: { FinderItem.normalize(shellPath: $0) }) }
+    public static var filePath: CommandReadableContent<String> { .init(initializer: { FinderItem.normalize(shellPath: $0) }) }
     
     /// Indicates reading string.
-    public static var string: CommandReadableContent<String> { .init(terminator: ":\n", initializer: { $0 }) }
+    public static var string: CommandReadableContent<String> { .init(initializer: { $0 }) }
     
     /// Indicates reading int.
-    public static var int: CommandReadableContent<Int> { .init(terminator: ": ", initializer: Int.init) }
+    public static var int: CommandReadableContent<Int> { .init(initializer: Int.init) }
     
     /// Indicates reading double.
-    public static var double: CommandReadableContent<Double> { .init(terminator: ": ", initializer: Double.init) }
+    public static var double: CommandReadableContent<Double> { .init(initializer: Double.init) }
     
     /// Indicates reading a file path that forms a FinderItem.
-    public static var finderItem: CommandReadableContent<FinderItem> { .init(terminator: ":\n") {
+    public static var finderItem: CommandReadableContent<FinderItem> { .init {
         FinderItem(at: FinderItem.normalize(shellPath: $0))
     } condition: {
         guard $0.exists else { throw ReadError(reason: "Invalid Input: The input filePath does not exist") }
@@ -61,15 +65,21 @@ public struct CommandReadableContent<Content> {
     } }
     
     public static func customized(initializer: @escaping (String) throws -> Content?) -> CommandReadableContent<Content> {
-        .init(terminator: ": ", initializer: initializer)
+        .init(initializer: initializer)
     }
     
     
-    init(terminator: String, initializer: @escaping (String) throws -> Content?, overrideGetLoop: ((_ manager: CommandReadManager<Content>, _ content: CommandReadableContent<Content>) -> Content)? = nil, condition: ((Content) throws -> Bool)? = nil) {
-        self.terminator = terminator
+    public func `default`(_ content: Content) -> CommandReadableContent {
+        CommandReadableContent(defaultValue: content, initializer: initializer, overrideGetLoop: overrideGetLoop, condition: condition, formatter: formatter)
+    }
+    
+    
+    init(defaultValue: Content? = nil, initializer: @escaping (String) throws -> Content?, overrideGetLoop: ((_ manager: CommandReadManager<Content>, _ content: CommandReadableContent<Content>) -> Content)? = nil, condition: ((Content) throws -> Bool)? = nil, formatter: ((Content) -> String)? = nil) {
         self.initializer = initializer
         self.overrideGetLoop = overrideGetLoop
         self.condition = condition
+        self.defaultValue = defaultValue
+        self.formatter = formatter
     }
     
 }

@@ -19,24 +19,27 @@ public struct CommandReadManager<Content> {
     
     internal var contentType: CommandReadableContent<Content>
     
-    internal var defaultValue: Content?
-    
-    internal var terminator: String? = nil
-    
     
     // MARK: - Internal
     
     
     
     internal func __printPrompt() {
-        Swift.print(self.prompt, terminator: self.terminator ?? self.contentType.terminator)
+        Swift.print(self.prompt, terminator: "")
         fflush(stdout)
     }
     
     func __readline(printDefault: Bool) -> StandardInputStorage? {
         var storage = StandardInputStorage()
         
-        if let defaultValue, printDefault {
+        var defaultValueLiteral: String? {
+            if let defaultValue = contentType.defaultValue, printDefault {
+                return contentType.formatter?(defaultValue) ?? "\(defaultValue)"
+            }
+            return nil
+        }
+        
+        if let defaultValue = defaultValueLiteral {
             let len = storage.insertAtCursor(formatted: "\(defaultValue, modifier: .dim)")
             storage.move(to: .left, length: len)
         }
@@ -49,19 +52,20 @@ public struct CommandReadManager<Content> {
                 return storage
                 
             case .tab:
-                if let defaultValue, printDefault,
-                   "\(defaultValue)".hasPrefix(String(storage.buffer)),
+                if let defaultValue = defaultValueLiteral,
+                   defaultValue.hasPrefix(String(storage.buffer)),
                    storage.cursor == storage.buffer.count || storage.buffer.isEmpty {
-                    var value = "\(defaultValue)"
+                    var value = defaultValue
                     if !storage.buffer.isEmpty {
                         for _ in 1...storage.cursor {
                             value.removeFirst()
                         }
                     }
+                    storage.insertAtCursor(value)
                 }
                 
             case .char(let char):
-                if defaultValue != nil, printDefault,
+                if contentType.defaultValue != nil, printDefault,
                    storage.cursor < storage.buffer.count,
                    storage.buffer[storage.cursor] != char {
                     storage.eraseFromCursorToEndOfLine()
@@ -81,22 +85,20 @@ public struct CommandReadManager<Content> {
             __printPrompt()
         }
         
-        guard let read = __readline(printDefault: printPrompt && !(self.terminator ?? contentType.terminator).contains("\n"))?.get() else {
+        guard let read = __readline(printDefault: printPrompt && !self.prompt.hasSuffix("\n"))?.get() else {
             Terminal.bell()
             Swift.print("\u{1B}[31mTry again\u{1B}[0m: ", terminator: "")
             fflush(stdout)
             return __getLoop(printPrompt: false, body: body)
         }
         
-        if let defaultValue, read.isEmpty {
+        if let defaultValue = contentType.defaultValue, read.isEmpty {
             return defaultValue
         }
         
         do {
-            guard let value = try body(read) else { throw ReadError(reason: "Invalid Input") }
-            
-            let condition = try condition?(value)
-            guard condition ?? true else { throw ReadError(reason: "Invalid Input.") }
+            guard let value = try body(read),
+                  try condition?(value) ?? true else { throw ReadError(reason: "Invalid Input.") }
             
             return value
         } catch {
@@ -122,13 +124,10 @@ public struct CommandReadManager<Content> {
     }
     
     
-    internal init(prompt: String, contentType: CommandReadableContent<Content>, defaultValue: Content? = nil, terminator: String? = nil,
-                  condition: ((_ content: Content) throws -> Bool)? = nil) {
+    internal init(prompt: String, contentType: CommandReadableContent<Content>, condition: ((_ content: Content) throws -> Bool)? = nil) {
         self.prompt = prompt
         self.condition = condition
         self.contentType = contentType
-        self.defaultValue = defaultValue
-        self.terminator = terminator
     }
     
 }
