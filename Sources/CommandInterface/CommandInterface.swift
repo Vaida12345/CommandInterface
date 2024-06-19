@@ -11,6 +11,11 @@ import ArgumentParser
 
 
 /// The protocol whose conforming types serve as entry points.
+///
+/// To use `read`, always set
+/// ```swift
+/// var __raw = __setRawMode(); defer { __resetTerminal(originalTerm: &__raw) }
+/// ```
 public protocol CommandInterface {
     
     

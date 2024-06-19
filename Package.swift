@@ -16,6 +16,6 @@ let package = Package (
         .target(name: "CommandInterface", dependencies: ["Stratum", .product(name: "ArgumentParser", package: "swift-argument-parser"), "CICComponent"], swiftSettings: [.unsafeFlags(["-enable-bare-slash-regex"])]),
         .testTarget(name: "CommandInterfaceTests", dependencies: ["CommandInterface"]),
         .target(name: "CICComponent"),
-        .executableTarget(name: "Client", dependencies: ["CommandInterface"], swiftSettings: [.unsafeFlags(["-enable-bare-slash-regex"])])
+        .executableTarget(name: "Client", dependencies: ["CommandInterface"], path: "Client", swiftSettings: [.unsafeFlags(["-enable-bare-slash-regex"])])
     ]
 )
