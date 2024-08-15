@@ -8,6 +8,7 @@
 
 import Foundation
 import ArgumentParser
+import OSLog
 
 
 /// The protocol whose conforming types serve as entry points.
@@ -40,27 +41,85 @@ public extension CommandInterface {
     /// Prints the target value.
     ///
     /// The terminator remains unformatted.
+    @available(*, deprecated, renamed: "print(_:terminator:modifiers:)", message: "Use the inline modifier in stead.")
+    @inlinable
     func print(_ item: CommandPrintManager.Interpolation, terminator: String = "\n", modifier: ((_ modifier: CommandPrintManager.Modifier) -> CommandPrintManager.Modifier)? = nil) {
-        if let modifier = modifier?(CommandPrintManager.Modifier.default) {
-            Swift.print(modifier.modify(item.description), terminator: terminator)
+        self.print(item, terminator: terminator, modifiers: modifier?(.default) ?? .default)
+    }
+    
+    /// Prints the target value.
+    ///
+    /// The terminator remains unformatted.
+    @inlinable
+    func print(_ item: CommandPrintManager.Interpolation, terminator: String = "\n") {
+        self.print(item, terminator: terminator, modifiers: .default)
+    }
+    
+    /// Prints the target value.
+    ///
+    /// The terminator remains unformatted.
+    func print(_ item: CommandPrintManager.Interpolation, terminator: String = "\n", modifiers: CommandPrintManager.Modifier...) {
+        let contents = if !modifiers.isEmpty {
+            modifiers.reduce(into: CommandPrintManager.Modifier.default, { $0.formUnion($1) }).modify(item.description)
         } else {
-            Swift.print(item.description, terminator: terminator)
+            item.description
         }
+        
+        do {
+            let parsedContent = try AttributedString(markdown: contents, options: .init(failurePolicy: .returnPartiallyParsedIfPossible))
+            var interpolation = CommandPrintManager.Interpolation(literalCapacity: 0, interpolationCount: 1)
+            interpolation.appendInterpolation(parsedContent)
+            
+            Swift.print(interpolation.description, terminator: terminator)
+        } catch {
+            let logger = Logger(subsystem: "CommandInterface", category: "Markdown Parsing")
+            logger.error("\(#function) cannot parse markdown: \"\(contents)\". It will not be treated as markdown.")
+            Swift.print(contents, terminator: terminator)
+        }
+        
         fflush(stdout)
     }
     
     /// Prints the target value.
     ///
     /// The terminator remains unformatted.
+    @inlinable
+    @available(*, deprecated, renamed: "print(_:terminator:modifiers:)", message: "Use the inline modifier in stead.")
     func print(_ items: Any..., separator: String = " ", terminator: String = "\n", modifier: ((_ modifier: CommandPrintManager.Modifier) -> CommandPrintManager.Modifier)? = nil) {
-        var result = ""
-        Swift.print(items, separator: separator, terminator: "", to: &result)
-        if let modifier = modifier?(CommandPrintManager.Modifier.default) {
-            Swift.print(modifier.modify(result), terminator: terminator)
-        } else {
-            Swift.print(result, terminator: terminator)
+        self.print(items, separator: separator, terminator: terminator, modifiers: modifier?(.default) ?? .default)
+    }
+    
+    /// Prints the target value.
+    ///
+    /// The terminator remains unformatted.
+    @inlinable
+    func print(_ items: Any..., separator: String = " ", terminator: String = "\n") {
+        self.print(items, separator: separator, terminator: terminator, modifiers: .default)
+    }
+    
+    /// Prints the target value.
+    ///
+    /// The terminator remains unformatted.
+    @inlinable
+    func print(_ items: Any..., separator: String = " ", terminator: String = "\n", modifiers: CommandPrintManager.Modifier...) {
+        self.print(items, separator: separator, terminator: terminator, modifiers: modifiers.reduce(into: CommandPrintManager.Modifier.default, { $0.formUnion($1) }))
+    }
+    
+    /// Prints the target value.
+    ///
+    /// The terminator remains unformatted.
+    @inlinable
+    func print(_ items: [Any], separator: String = " ", terminator: String = "\n", modifiers: CommandPrintManager.Modifier...) {
+        var interpolation = CommandPrintManager.Interpolation(literalCapacity: 0, interpolationCount: items.count)
+        for (index, item) in items.enumerated() {
+            interpolation.appendInterpolation(item)
+            
+            if index != items.count - 1 {
+                interpolation.appendLiteral(separator)
+            }
         }
-        fflush(stdout)
+        
+        self.print(interpolation, terminator: terminator, modifiers: modifiers.reduce(into: CommandPrintManager.Modifier.default, { $0.formUnion($1) }))
     }
     
     /// Reads a value from stdin.

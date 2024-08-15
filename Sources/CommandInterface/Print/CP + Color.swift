@@ -10,7 +10,7 @@
 extension CommandPrintManager {
     
     /// The system defined colors.
-    public enum Color: Int8 {
+    public enum Color: UInt8, Sendable {
         
         case black = 30
         case red = 31
@@ -31,20 +31,6 @@ extension CommandPrintManager {
         case brightCyan = 96
         case brightWhite = 97
         
-        // Stand alone colors
-        
-//        /// A gray color with color ID 245.
-//        case secondary = -1
-        
-        
-//        internal var __256ColorCode: Int? {
-//            switch self.rawValue {
-//            case -1:
-//                return 245
-//            default:
-//                return nil
-//            }
-//        }
     }
     
 }

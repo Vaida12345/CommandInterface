@@ -214,14 +214,15 @@ public struct StandardInputStorage {
     
     public mutating func write(formatted item: CommandPrintManager.Interpolation) -> Int {
         print(item.description, terminator: "")
-        fflush(stdout);
+        fflush(stdout)
         
-        for _ in cursor..<min(buffer.count, item.raw.count + cursor) {
+        let raw = item.words.reduce("") { $0 + $1.content }
+        for _ in cursor..<min(buffer.count, raw.count + cursor) {
             buffer.remove(at: cursor)
         }
-        buffer.insert(contentsOf: item.raw, at: cursor)
-        cursor += item.raw.count
-        return item.raw.count
+        buffer.insert(contentsOf: raw, at: cursor)
+        cursor += raw.count
+        return raw.count
     }
     
     @inlinable
@@ -260,16 +261,18 @@ public struct StandardInputStorage {
     
     @discardableResult
     public mutating func insertAtCursor(formatted item: CommandPrintManager.Interpolation) -> Int {
-        guard !item.raw.isEmpty else { return 0 }
+        let raw = item.words.reduce("") { $0 + $1.content }
+        
+        guard !raw.isEmpty else { return 0 }
         if cursor == buffer.count {
             print(item.description, terminator: "")
             fflush(stdout);
             
-            buffer.append(contentsOf: item.raw)
-            cursor += item.raw.count
-            return item.raw.count
+            buffer.append(contentsOf: raw)
+            cursor += raw.count
+            return raw.count
         } else {
-            let place = item.raw.count
+            let place = raw.count
             // allocate space
             self.insertAtCursor(String(repeating: " ", count: place))
             // move back

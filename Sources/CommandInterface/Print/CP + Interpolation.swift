@@ -14,62 +14,100 @@ extension CommandPrintManager {
     
     public struct Interpolation: StringInterpolationProtocol, CustomStringConvertible, TextOutputStream, ExpressibleByStringInterpolation {
         
-        private var value: String
-        
-        internal var raw: String
+        var words: [Word]
         
         public var description: String {
-            self.value
+            self.words.reduce("") { $0 + $1.modifier.modify($1.content) }
         }
         
         public init(literalCapacity: Int, interpolationCount: Int) {
-            self.value = String()
-            self.value.reserveCapacity(literalCapacity)
-            self.raw = String()
+            self.words = []
+            self.words.reserveCapacity(literalCapacity + interpolationCount)
         }
         
-        public init(stringInterpolation: CommandPrintManager.Interpolation) {
+        public init(stringInterpolation: Interpolation) {
             self = stringInterpolation
         }
         
         public init(stringLiteral value: String) {
-            self.value = value
-            self.raw = value
+            self.words = [Word(content: value, modifier: .default)]
         }
         
+        private mutating func _append(string: String, modifier: Modifier) {
+            self.words.append(Word(content: string, modifier: modifier))
+        }
         
         public mutating func appendLiteral(_ literal: String) {
-            self.value += literal
-            self.raw += literal
+            self._append(string: literal, modifier: .default)
         }
         
         public mutating func appendInterpolation<T>(_ value: T) where T: CustomStringConvertible {
-            self.value += value.description
-            self.raw += value.description
+            self._append(string: value.description, modifier: .default)
+        }
+        
+        public mutating func appendInterpolation(_ value: Interpolation) {
+            self.words.append(contentsOf: value.words)
         }
         
         public mutating func appendInterpolation<T>(_ value: T) {
-            self.value += String(describing: value)
-            self.raw += String(describing: value)
+            switch T.self {
+            case is FinderItem.Type:
+                self.appendInterpolation(value as! FinderItem)
+            case is AttributedString.Type:
+                self.appendInterpolation(value as! AttributedString)
+                
+            default:
+                self.appendLiteral("\(value)")
+            }
         }
         
         public mutating func appendInterpolation(_ value: FinderItem) {
-            self.appendInterpolation(value.url, modifier: .underline)
+            self.appendInterpolation(value.path, modifier: .underline.foregroundColor(.blue))
         }
         
         public mutating func appendInterpolation<T>(_ value: T, modifier: CommandPrintManager.Modifier) {
-            self.value += modifier.modify(String(describing: value))
-            self.raw += String(describing: value)
+            self.appendInterpolation(value)
+            self.words[words.count - 1].modifier.formUnion(modifier)
+        }
+        
+        public mutating func appendInterpolation<T>(_ value: T, modifiers: CommandPrintManager.Modifier...) {
+            self.appendInterpolation(value, modifier: modifiers.reduce(into: CommandPrintManager.Modifier.default) { $0.formUnion($1) })
+        }
+        
+        public mutating func appendInterpolation(_ value: AttributedString) {
+            for run in value.runs {
+                let range = run.range
+                let raw = value[range].characters
+                let attributes = run.attributes
+                var modifier = CommandPrintManager.Modifier.default
+                
+                // check attributes
+                if let intend = attributes.inlinePresentationIntent {
+                    
+                    if intend.contains(.emphasized)         { modifier.formUnion(.italic) }
+                    if intend.contains(.strikethrough)      { modifier.formUnion(.strikethrough) }
+                    if intend.contains(.stronglyEmphasized) { modifier.formUnion(.bold) }
+                }
+                
+                self.appendInterpolation(String(raw), modifier: modifier)
+            }
         }
         
         public mutating func write(_ string: String) {
-            self.value += string
-            self.raw += string
+            self.appendLiteral(string)
         }
         
         public typealias StringLiteralType = String
         
         public typealias StringInterpolation = Self
+        
+        struct Word {
+            
+            let content: String
+            
+            var modifier: Modifier
+            
+        }
         
     }
     

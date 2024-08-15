@@ -10,27 +10,39 @@
 extension CommandPrintManager {
     
     /// The modifier to the output.
-    public struct Modifier: OptionSet {
+    public struct Modifier: OptionSet, Sendable {
         
         /// The internal rawValue.
-        public let rawValue: UInt8
+        ///
+        /// Layout
+        /// ```
+        /// |    <- 8 bit ->   |    <- 8 bit ->   |    ...   |
+        /// | foreground color | background color | raw bits |
+        /// ```
+        public let rawValue: UInt64
         
-        private var foregroundColor: Color?
+        public var foregroundColor: Color? {
+            let bits = self.rawValue >> (64 - 8)
+            return Color(rawValue: UInt8(truncatingIfNeeded: bits))
+        }
         
-        private var backgroundColor: Color?
+        public var backgroundColor: Color? {
+            let bits = self.rawValue >> (64 - 16)
+            return Color(rawValue: UInt8(truncatingIfNeeded: bits))
+        }
         
         private var escaper: String {
             var lhs: Array<Int> = [] // Use array instead of set as 256 color requires order.
-            for shift in 0...7 {
+            for shift in 1...9 {
                 if (self.contains(Modifier(rawValue: 1 << shift))) {
-                    lhs.append(__escaper(shift))
+                    lhs.append(shift)
                 }
             }
             
             if let raw = self.foregroundColor?.rawValue {
                 lhs.append(Int(raw))
             }
-            if let raw = self.backgroundColor?.rawValue{
+            if let raw = self.backgroundColor?.rawValue {
                 lhs.append(Int(raw) + 10)
             }
             
@@ -39,31 +51,33 @@ extension CommandPrintManager {
         
         
         /// The bold modifier.
-        public static let bold          = Modifier(rawValue: 1 << 0)
+        public static let bold          = Modifier(rawValue: 1 << 1)
         
         /// The dim / faint modifier.
-        public static let dim           = Modifier(rawValue: 1 << 1)
+        public static let dim           = Modifier(rawValue: 1 << 2)
         
         /// The italic modifier.
-        public static let italic        = Modifier(rawValue: 1 << 2)
+        public static let italic        = Modifier(rawValue: 1 << 3)
         
         /// The underline modifier.
-        public static let underline     = Modifier(rawValue: 1 << 3)
+        public static let underline     = Modifier(rawValue: 1 << 4)
         
         /// The blinking modifier.
-        public static let blinking      = Modifier(rawValue: 1 << 4)
+        public static let blinking      = Modifier(rawValue: 1 << 5)
         
-        /// The inverse modifier.
-        public static let inverse       = Modifier(rawValue: 1 << 5)
+        /// The inverse / reverse modifier.
+        public static let inverse       = Modifier(rawValue: 1 << 7)
         
-        /// The hidden modifier.
-        public static let hidden        = Modifier(rawValue: 1 << 6)
+        /// The hidden / invisible modifier.
+        public static let hidden        = Modifier(rawValue: 1 << 8)
         
         /// The strikethrough modifier.
-        public static let strikethrough = Modifier(rawValue: 1 << 7)
+        ///
+        /// Note: This mode is not supported on the macOS native terminal.
+        public static let strikethrough = Modifier(rawValue: 1 << 9)
         
         /// The default modifier, without any style.
-        internal static let `default`    = Modifier(rawValue: 0 << 0)
+        public static let `default`    = Modifier(rawValue: 0 << 0)
         
         
         private func __escaper(_ __index: Int) -> Int {
@@ -141,17 +155,20 @@ extension CommandPrintManager {
         }
         
         internal func modify(_ content: String) -> String {
+            guard self != .default else { return content }
             let escapers = self.escaper
             return "\u{1B}[\(escapers)m" + content + "\u{1B}[0m"
         }
         
-        private init(rawValue: UInt8, foregroundColor: Color? = nil, backgroundColor: Color? = nil) {
+        private init(rawValue: UInt64, foregroundColor: Color? = nil, backgroundColor: Color? = nil) {
+            var rawValue = rawValue
+            rawValue |= UInt64(foregroundColor?.rawValue ?? UInt8()) << (64 - 8)
+            rawValue |= UInt64(backgroundColor?.rawValue ?? UInt8()) << (64 - 16)
+            
             self.rawValue = rawValue
-            self.foregroundColor = foregroundColor
-            self.backgroundColor = backgroundColor
         }
         
-        public init(rawValue: UInt8) {
+        public init(rawValue: UInt64) {
             self.init(rawValue: rawValue, foregroundColor: nil, backgroundColor: nil)
         }
     }

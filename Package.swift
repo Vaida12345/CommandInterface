@@ -1,4 +1,4 @@
-// swift-tools-version: 5.9
+// swift-tools-version: 6.0
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -7,15 +7,35 @@ let package = Package (
     name: "CommandInterface",
     platforms: [
         .macOS(.v13)
-    ], products: [
+    ],
+    products: [
         .library(name: "CommandInterface", targets: ["CommandInterface"]),
-    ], dependencies: [
+    ],
+    dependencies: [
         .package(name: "Stratum", path: "/Users/vaida/Library/Mobile Documents/com~apple~CloudDocs/DataBase/Projects/Packages/Stratum"),
-        .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.3.0")
-    ], targets: [
-        .target(name: "CommandInterface", dependencies: ["Stratum", .product(name: "ArgumentParser", package: "swift-argument-parser"), "CICComponent"], swiftSettings: [.unsafeFlags(["-enable-bare-slash-regex"])]),
+        .package(url: "https://github.com/apple/swift-argument-parser", from: "1.3.0")
+    ],
+    targets: [
+        .target(
+            name: "CommandInterface",
+            dependencies: [
+                "Stratum",
+                .product(name: "ArgumentParser", package: "swift-argument-parser"),
+                "CICComponent"
+            ],
+            swiftSettings: [.unsafeFlags(["-enable-bare-slash-regex"])]
+        ),
         .testTarget(name: "CommandInterfaceTests", dependencies: ["CommandInterface"]),
         .target(name: "CICComponent"),
-        .executableTarget(name: "Client", dependencies: ["CommandInterface"], path: "Client", swiftSettings: [.unsafeFlags(["-enable-bare-slash-regex"])])
+        .executableTarget(
+            name: "Client",
+            dependencies: [
+                "CommandInterface",
+                "Stratum",
+                .product(name: "ArgumentParser", package: "swift-argument-parser")
+            ],
+            path: "Client",
+            swiftSettings: [.unsafeFlags(["-enable-bare-slash-regex"])]
+        )
     ]
 )
