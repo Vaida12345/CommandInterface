@@ -10,43 +10,35 @@
 extension CommandPrintManager {
     
     /// The modifier to the output.
-    public struct Modifier: OptionSet, Sendable {
+    public struct Modifier: Sendable, Equatable {
         
         /// The internal rawValue.
-        ///
-        /// Layout
-        /// ```
-        /// |    <- 8 bit ->   |    <- 8 bit ->   |    ...   |
-        /// | foreground color | background color | raw bits |
-        /// ```
-        public let rawValue: UInt64
+        private var options: Options
         
-        public var foregroundColor: Color? {
-            let bits = self.rawValue >> (64 - 8)
-            return Color(rawValue: UInt8(truncatingIfNeeded: bits))
+        public var foregroundColor: Color?
+        
+        public var backgroundColor: Color?
+        
+        
+        public func contains(_ rhs: Modifier) -> Bool {
+            guard self.options.contains(rhs.options) else { return false }
+            guard self.foregroundColor == nil || self.foregroundColor == rhs.foregroundColor else { return false }
+            guard self.backgroundColor == nil || self.backgroundColor == rhs.backgroundColor else { return false }
+            return true
         }
         
-        public var backgroundColor: Color? {
-            let bits = self.rawValue >> (64 - 16)
-            return Color(rawValue: UInt8(truncatingIfNeeded: bits))
+        public func union(_ rhs: Modifier) -> Modifier {
+            Modifier(
+                options: self.options.union(rhs.options),
+                foregroundColor: self.foregroundColor ?? rhs.foregroundColor,
+                backgroundColor: self.backgroundColor ?? rhs.backgroundColor
+            )
         }
         
-        private var escaper: String {
-            var lhs: Array<Int> = [] // Use array instead of set as 256 color requires order.
-            for shift in 1...9 {
-                if (self.contains(Modifier(rawValue: 1 << shift))) {
-                    lhs.append(shift)
-                }
-            }
-            
-            if let raw = self.foregroundColor?.rawValue {
-                lhs.append(Int(raw))
-            }
-            if let raw = self.backgroundColor?.rawValue {
-                lhs.append(Int(raw) + 10)
-            }
-            
-            return (lhs.unique().map(String.init).joined(separator: ";"))
+        public mutating func formUnion(_ rhs: Modifier) {
+            self.options.formUnion(rhs.options)
+            if self.foregroundColor == nil { self.foregroundColor = rhs.foregroundColor }
+            if self.backgroundColor == nil { self.backgroundColor = rhs.backgroundColor }
         }
         
         
@@ -73,16 +65,12 @@ extension CommandPrintManager {
         
         /// The strikethrough modifier.
         ///
-        /// Note: This mode is not supported on the macOS native terminal.
+        /// - Note: This mode is not supported on the macOS native terminal.
         public static let strikethrough = Modifier(rawValue: 1 << 9)
         
         /// The default modifier, without any style.
-        public static let `default`    = Modifier(rawValue: 0 << 0)
+        public static let `default`     = Modifier(rawValue: 0 << 0)
         
-        
-        private func __escaper(_ __index: Int) -> Int {
-            __index < 5 ? 1 + __index : 2 + __index
-        }
         
         /// The bold modifier.
         @inlinable
@@ -136,12 +124,12 @@ extension CommandPrintManager {
         
         /// Sets the text color.
         public func foregroundColor(_ color: Color) -> Modifier {
-            Modifier(rawValue: self.rawValue, foregroundColor: color, backgroundColor: self.backgroundColor)
+            Modifier(options: self.options, foregroundColor: color, backgroundColor: self.backgroundColor)
         }
         
         /// Sets the text background color.
         public func backgroundColor(_ color: Color) -> Modifier {
-            Modifier(rawValue: self.rawValue, foregroundColor: self.foregroundColor, backgroundColor: color)
+            Modifier(options: self.options, foregroundColor: self.foregroundColor, backgroundColor: color)
         }
         
         /// Sets the text color.
@@ -156,20 +144,56 @@ extension CommandPrintManager {
         
         internal func modify(_ content: String) -> String {
             guard self != .default else { return content }
-            let escapers = self.escaper
-            return "\u{1B}[\(escapers)m" + content + "\u{1B}[0m"
+            
+            var options: Set<Int> = []
+            for shift in 1...9 {
+                if (self.options.contains(Options(rawValue: 1 << shift))) {
+                    options.insert(shift)
+                }
+            }
+            
+            if let raw = self.foregroundColor?.rawValue {
+                options.insert(Int(raw))
+            }
+            
+            if let raw = self.backgroundColor?.rawValue {
+                options.insert(Int(raw) + 10)
+            }
+            
+            return "\u{1B}[\(options.map(String.init).joined(separator: ";"))m" + content + "\u{1B}[0m"
         }
         
         private init(rawValue: UInt64, foregroundColor: Color? = nil, backgroundColor: Color? = nil) {
-            var rawValue = rawValue
-            rawValue |= UInt64(foregroundColor?.rawValue ?? UInt8()) << (64 - 8)
-            rawValue |= UInt64(backgroundColor?.rawValue ?? UInt8()) << (64 - 16)
-            
-            self.rawValue = rawValue
+            self.options = Options(rawValue: rawValue)
+            self.foregroundColor = foregroundColor
+            self.backgroundColor = backgroundColor
+        }
+        
+        private init(options: Options, foregroundColor: Color? = nil, backgroundColor: Color? = nil) {
+            self.options = options
+            self.foregroundColor = foregroundColor
+            self.backgroundColor = backgroundColor
         }
         
         public init(rawValue: UInt64) {
             self.init(rawValue: rawValue, foregroundColor: nil, backgroundColor: nil)
+        }
+        
+        public static func == (_ lhs: Self, _ rhs: Self) -> Bool {
+            lhs.options == rhs.options &&
+            lhs.foregroundColor == rhs.foregroundColor &&
+            lhs.backgroundColor == rhs.backgroundColor
+        }
+        
+        
+        private struct Options: OptionSet, Sendable, CustomStringConvertible {
+            
+            var description: String {
+                "Options(\(rawValue))"
+            }
+            
+            let rawValue: UInt64
+            
         }
     }
     

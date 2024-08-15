@@ -8,6 +8,8 @@
 
 import Foundation
 import Stratum
+import SwiftUI
+import OSLog
 
 
 extension CommandPrintManager {
@@ -87,6 +89,40 @@ extension CommandPrintManager {
                     if intend.contains(.emphasized)         { modifier.formUnion(.italic) }
                     if intend.contains(.strikethrough)      { modifier.formUnion(.strikethrough) }
                     if intend.contains(.stronglyEmphasized) { modifier.formUnion(.bold) }
+                }
+                
+                if let foregroundColor = attributes.foregroundColor {
+                    switch foregroundColor {
+                    case .black:     modifier.formUnion(.foregroundColor(.black))
+                    case .red:       modifier.formUnion(.foregroundColor(.red))
+                    case .green:     modifier.formUnion(.foregroundColor(.green))
+                    case .yellow:    modifier.formUnion(.foregroundColor(.yellow))
+                    case .blue:      modifier.formUnion(.foregroundColor(.blue))
+                    case .cyan:      modifier.formUnion(.foregroundColor(.cyan))
+                    case .white:     modifier.formUnion(.foregroundColor(.white))
+                    case .primary:   modifier.formUnion(.foregroundColor(.black))
+                    case .secondary: modifier.formUnion(.dim)
+                    case .gray:      modifier.formUnion(.dim)
+                    default:
+                        let logger = Logger(subsystem: "CommandInterface", category: "AttributedString Attribute")
+                        logger.error("The color \(foregroundColor) is not supported, ignored.")
+                    }
+                }
+                
+                if let backgroundColor = attributes.backgroundColor {
+                    switch backgroundColor {
+                    case .black:     modifier.formUnion(.backgroundColor(.black))
+                    case .red:       modifier.formUnion(.backgroundColor(.red))
+                    case .green:     modifier.formUnion(.backgroundColor(.green))
+                    case .yellow:    modifier.formUnion(.backgroundColor(.yellow))
+                    case .blue:      modifier.formUnion(.backgroundColor(.blue))
+                    case .cyan:      modifier.formUnion(.backgroundColor(.cyan))
+                    case .white:     modifier.formUnion(.backgroundColor(.white))
+                    case .primary:   modifier.formUnion(.backgroundColor(.black))
+                    default:
+                        let logger = Logger(subsystem: "CommandInterface", category: "AttributedString Attribute")
+                        logger.error("The color \(backgroundColor) is not supported, ignored.")
+                    }
                 }
                 
                 self.appendInterpolation(String(raw), modifier: modifier)

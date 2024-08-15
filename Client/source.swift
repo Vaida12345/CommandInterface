@@ -10,8 +10,11 @@ import Stratum
 struct Command: CommandInterface, ParsableCommand {
     
     mutating func run() throws {
+        var string = AttributedString("12345")
+        string.foregroundColor = .blue
+        string.inlinePresentationIntent = .stronglyEmphasized
         
-        print("*hello*, **\("I", modifier: .foregroundColor(.red))** good")
+        print("The sum is \(string).")
     }
     
 }
