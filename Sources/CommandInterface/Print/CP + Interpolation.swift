@@ -104,8 +104,8 @@ extension CommandPrintManager {
                     case .secondary: modifier.formUnion(.dim)
                     case .gray:      modifier.formUnion(.dim)
                     default:
-                        let logger = Logger(subsystem: "CommandInterface", category: "AttributedString Attribute")
-                        logger.error("The color \(foregroundColor) is not supported, ignored.")
+                        let vector = foregroundColor.animatableData
+                        modifier.formUnion(.foregroundColor(.rgb(UInt8(vector[0] * 256), UInt8(vector[1] * 256), UInt8(vector[2] * 256))))
                     }
                 }
                 
@@ -120,8 +120,8 @@ extension CommandPrintManager {
                     case .white:     modifier.formUnion(.backgroundColor(.white))
                     case .primary:   modifier.formUnion(.backgroundColor(.black))
                     default:
-                        let logger = Logger(subsystem: "CommandInterface", category: "AttributedString Attribute")
-                        logger.error("The color \(backgroundColor) is not supported, ignored.")
+                        let vector = backgroundColor.animatableData
+                        modifier.formUnion(.backgroundColor(.rgb(UInt8(vector[0] * 256), UInt8(vector[1] * 256), UInt8(vector[2] * 256))))
                     }
                 }
                 

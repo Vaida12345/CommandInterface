@@ -11,10 +11,8 @@ struct Command: CommandInterface, ParsableCommand {
     
     mutating func run() throws {
         var string = AttributedString("12345")
-        string.foregroundColor = .blue
-        string.inlinePresentationIntent = .stronglyEmphasized
         
-        print("The sum is \(string).")
+        print("The sum is \(string, modifiers: .foregroundColor(.rgb(100, 100, 10)), .blinking).")
     }
     
 }

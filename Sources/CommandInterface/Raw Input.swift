@@ -93,6 +93,7 @@ public func __consumeNext() -> NextChar? {
 
 
 // Function to set the terminal to raw mode
+@available(*, deprecated, renamed: "Terminal.setRawMode()", message: "Use the public interface instead.")
 @inlinable
 public func __setRawMode() -> termios {
     fflush(stdout)
@@ -115,6 +116,7 @@ public func __setRawMode() -> termios {
 }
 
 // Function to reset the terminal to its original settings
+@available(*, deprecated, renamed: "Terminal.reset()", message: "Use the public interface instead.")
 @inlinable
 public func __resetTerminal(originalTerm: inout termios) {
     tcsetattr(STDIN_FILENO, TCSANOW, &originalTerm)

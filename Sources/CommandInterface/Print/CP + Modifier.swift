@@ -145,6 +145,7 @@ extension CommandPrintManager {
         internal func modify(_ content: String) -> String {
             guard self != .default else { return content }
             
+            var header = ""
             var options: Set<Int> = []
             for shift in 1...9 {
                 if (self.options.contains(Options(rawValue: 1 << shift))) {
@@ -152,15 +153,27 @@ extension CommandPrintManager {
                 }
             }
             
-            if let raw = self.foregroundColor?.rawValue {
-                options.insert(Int(raw))
+            if let foregroundColor = self.foregroundColor {
+                if let color = foregroundColor as? _256Color {
+                    header += "\u{1B}[38;5;\(color.code)m"
+                } else {
+                    options.insert(Int(foregroundColor.code))
+                }
             }
             
-            if let raw = self.backgroundColor?.rawValue {
-                options.insert(Int(raw) + 10)
+            if let backgroundColor = self.backgroundColor {
+                if let color = backgroundColor as? _256Color {
+                    header += "\u{1B}[48;5;\(color.code)m"
+                } else {
+                    options.insert(Int(backgroundColor.code) + 10)
+                }
             }
             
-            return "\u{1B}[\(options.map(String.init).joined(separator: ";"))m" + content + "\u{1B}[0m"
+            if !options.isEmpty {
+                header += "\u{1B}[\(options.map(String.init).joined(separator: ";"))m"
+            }
+            
+            return header + content + "\u{1B}[0m"
         }
         
         private init(rawValue: UInt64, foregroundColor: Color? = nil, backgroundColor: Color? = nil) {

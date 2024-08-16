@@ -12,6 +12,8 @@ import Foundation
 /// The interface for interacting with stdout.
 public struct Terminal {
     
+    nonisolated(unsafe) private static var originalTerminal: termios?
+    
     @inlinable
     public static var cursor: Cursor.Type {
         Cursor.self
@@ -90,6 +92,37 @@ public struct Terminal {
     public static func insertAtCursor(_ value: String) {
         print("\(escape)[@\(value)", terminator: "")
         fflush(stdout);
+    }
+    
+    /// Sets the terminal to raw mode.
+    ///
+    /// Terminal raw mode is a mode in which the terminal operates without processing input or output, meaning it doesn't interpret special characters like `⌃+C` or `⏎` and doesn't echo typed characters back to the screen. This mode allows programs to have full control over user input, which is useful for implementing custom key handling, like in text editors or command-line interfaces.
+    public static func setRawMode() {
+        fflush(stdout)
+        
+        var originalTerm = termios()
+        var rawTerm = termios()
+        
+        // Get the current terminal settings
+        tcgetattr(STDIN_FILENO, &originalTerm)
+        rawTerm = originalTerm
+        
+        // Set the terminal to raw mode
+        rawTerm.c_lflag &= ~(UInt(ICANON | ECHO))
+        rawTerm.c_cc.0 = 1 // VMIN
+        rawTerm.c_cc.1 = 0 // VTIME
+        
+        tcsetattr(STDIN_FILENO, TCSANOW, &rawTerm)
+        
+        if self.originalTerminal == nil {
+            self.originalTerminal = originalTerm
+        }
+    }
+    
+    /// Reset the terminal to original mode.
+    public static func reset() {
+        guard var terminal = self.originalTerminal else { return }
+        tcsetattr(STDIN_FILENO, TCSANOW, &terminal)
     }
     
 }
