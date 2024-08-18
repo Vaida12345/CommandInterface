@@ -104,7 +104,7 @@ extension CommandReadableContent where Content == String {
                 storage.deleteBeforeCursor()
             case .char(let value): // Other characters
                 if override {
-                    if value == storage.buffer[storage.cursor] {
+                    if storage.buffer.count > storage.cursor, value == storage.buffer[storage.cursor] {
                         storage.write(value)
                     } else {
                         storage.eraseFromCursorToEndOfLine()

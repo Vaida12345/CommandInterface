@@ -82,7 +82,7 @@ extension CommandReadableContent where Content == String {
             manager.__printPrompt()
         }
         
-        guard let read = __readline(printDefault: printPrompt && !manager.prompt.hasSuffix("\n"), manager: manager, formatter: formatter) else {
+        guard let read = __readline(printDefault: printPrompt && !manager.prompt.description.hasSuffix("\n"), manager: manager, formatter: formatter) else {
             Terminal.bell()
             Swift.print("\u{1B}[31mTry again\u{1B}[0m: ", terminator: "")
             fflush(stdout)

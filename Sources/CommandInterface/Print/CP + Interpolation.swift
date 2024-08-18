@@ -67,13 +67,9 @@ extension CommandPrintManager {
             self.appendInterpolation(value.path, modifier: .underline.foregroundColor(.blue))
         }
         
-        public mutating func appendInterpolation<T>(_ value: T, modifier: CommandPrintManager.Modifier) {
+        public mutating func appendInterpolation<T>(_ value: T, modifier: CommandPrintManager.Modifier...) {
             self.appendInterpolation(value)
-            self.words[words.count - 1].modifier.formUnion(modifier)
-        }
-        
-        public mutating func appendInterpolation<T>(_ value: T, modifiers: CommandPrintManager.Modifier...) {
-            self.appendInterpolation(value, modifier: modifiers.reduce(into: CommandPrintManager.Modifier.default) { $0.formUnion($1) })
+            self.words[words.count - 1].modifier.formUnion(modifier.reduce(into: CommandPrintManager.Modifier.default) { $0.formUnion($1) })
         }
         
         public mutating func appendInterpolation(_ value: AttributedString) {

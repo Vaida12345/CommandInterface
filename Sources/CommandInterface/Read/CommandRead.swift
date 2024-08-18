@@ -13,7 +13,7 @@ import Stratum
 /// The interface for interacting with reading from stdin.
 public struct CommandReadManager<Content> {
     
-    internal let prompt: String
+    internal let prompt: CommandPrintManager.Interpolation
     
     internal let condition: ((_ content: Content) throws -> Bool)?
     
@@ -25,7 +25,7 @@ public struct CommandReadManager<Content> {
     
     
     internal func __printPrompt() {
-        Swift.print(self.prompt, terminator: "")
+        DefaultInterface.default.print(self.prompt, terminator: "")
         fflush(stdout)
     }
     
@@ -85,7 +85,7 @@ public struct CommandReadManager<Content> {
             __printPrompt()
         }
         
-        guard let read = __readline(printDefault: printPrompt && !self.prompt.hasSuffix("\n"))?.get() else {
+        guard let read = __readline(printDefault: printPrompt && !self.prompt.description.hasSuffix("\n"))?.get() else {
             Terminal.bell()
             Swift.print("\u{1B}[31mTry again\u{1B}[0m: ", terminator: "")
             fflush(stdout)
@@ -124,7 +124,7 @@ public struct CommandReadManager<Content> {
     }
     
     
-    internal init(prompt: String, contentType: CommandReadableContent<Content>, condition: ((_ content: Content) throws -> Bool)? = nil) {
+    internal init(prompt: CommandPrintManager.Interpolation, contentType: CommandReadableContent<Content>, condition: ((_ content: Content) throws -> Bool)? = nil) {
         self.prompt = prompt
         self.condition = condition
         self.contentType = contentType

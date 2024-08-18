@@ -23,6 +23,14 @@ public protocol CommandInterface {
 }
 
 
+public struct DefaultInterface: CommandInterface {
+    
+    public static var `default`: DefaultInterface {
+        DefaultInterface()
+    }
+    
+}
+
 public extension CommandInterface {
     
     /// Link to the interface for interacting with stdout.
@@ -52,7 +60,7 @@ public extension CommandInterface {
         let contents = item.description
         
         do {
-            let parsedContent = try AttributedString(markdown: contents, options: .init(failurePolicy: .returnPartiallyParsedIfPossible))
+            let parsedContent = try AttributedString(markdown: contents, options: .init(interpretedSyntax: .inlineOnly, failurePolicy: .returnPartiallyParsedIfPossible))
             var interpolation = CommandPrintManager.Interpolation(literalCapacity: 0, interpolationCount: 1)
             interpolation.appendInterpolation(parsedContent)
             
@@ -101,7 +109,7 @@ public extension CommandInterface {
     ///   - condition: The condition that will be matched against.
     func read<Content>(_ contentType: CommandReadableContent<Content>, prompt: CommandPrintManager.Interpolation,
                        condition: ((_ content: Content) throws -> Bool)? = nil) -> Content {
-        CommandReadManager(prompt: prompt.description, contentType: contentType, condition: contentType.condition ?? condition).get()
+        CommandReadManager(prompt: prompt, contentType: contentType, condition: contentType.condition ?? condition).get()
     }
     
     
