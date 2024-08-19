@@ -19,3 +19,8 @@ struct Command: CommandInterface, ParsableCommand {
     }
     
 }
+
+
+enum Model: String, CaseIterable {
+     case a
+}

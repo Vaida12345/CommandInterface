@@ -45,7 +45,7 @@ public protocol CommandReadable {
     /// The core. The function reads from the user.
     ///
     /// Useless you want to customize the get loop, use the default implementation.
-    func readUserInput() -> StandardInputStorage?
+    func readUserInput() -> String?
     
     
     associatedtype Content
@@ -81,7 +81,7 @@ public extension CommandReadable {
     func getLoop(_ manager: _CommandReadableManager<Content>) -> Content {
         DefaultInterface.default.print(manager.prompt, terminator: "")
         
-        guard let input = self.readUserInput()?.get() else {
+        guard let input = self.readUserInput() else {
             return getLoopRecursion(manager: manager)
         }
         
@@ -108,33 +108,58 @@ public extension CommandReadable {
         }
     }
     
-    func readUserInput() -> StandardInputStorage? {
-        var storage = StandardInputStorage()
-        let defaultValue = self.defaultValue.map(formatter(content:))
-        
-        if let defaultValue {
-            let len = storage.insertAtCursor(formatted: "\(defaultValue, modifier: .dim)")
-            storage.move(to: .left, length: len)
+    func readUserInput() -> String? {
+        if let defaultValue = self.defaultValue.map(formatter(content:)) {
+            return readUserInputWithDefault(default: defaultValue)
         }
+        
+        var storage = StandardInputStorage()
+        while let next = NextChar.consumeNext() {
+            switch next {
+            case .newline:
+                Swift.print("\n", terminator: "")
+                fflush(stdout)
+                return storage.get()
+                
+            case .tab:
+                // do nothing
+                break
+                
+            default:
+                storage.handle(next)
+            }
+            
+            let string = storage.get()
+            if self.stopSequence.contains(where: { (try? $0.wholeMatch(in: string)) != nil }) {
+                return string
+            }
+        }
+        
+        return nil
+    }
+    
+    func readUserInputWithDefault(default defaultValue: String) -> String? {
+        var storage = StandardInputStorage()
+        
+        var autocompleteLength = storage.insertAtCursor(formatted: "\(defaultValue, modifier: .dim)")
+        storage.move(to: .left, length: autocompleteLength)
         
         while let next = NextChar.consumeNext() {
             switch next {
             case .newline:
                 Swift.print("\n", terminator: "")
                 fflush(stdout)
-                return storage
+                return storage.get()
                 
             case .tab:
-                if let defaultValue,
-                   defaultValue.hasPrefix(storage.getBeforeCursor()) {
+                if defaultValue.hasPrefix(storage.get()) {
                     var value = defaultValue
-                    value.removeFirst(storage.getBeforeCursor().count)
+                    value.removeFirst(storage.get().count)
                     storage.write(value)
                 }
                 
             case .char(let char):
-                if defaultValue != nil,
-                   storage.getCursorChar() != char {
+                if storage.getCursorChar() != char {
                     storage.eraseFromCursorToEndOfLine()
                 }
                 storage.write(char)
@@ -145,7 +170,7 @@ public extension CommandReadable {
             
             let string = storage.get()
             if self.stopSequence.contains(where: { (try? $0.wholeMatch(in: string)) != nil }) {
-                return storage
+                return string
             }
         }
         

@@ -5,6 +5,8 @@
 //  Created by Vaida on 8/19/24.
 //
 
+import Foundation
+
 
 public enum NextChar: Equatable {
     case up
