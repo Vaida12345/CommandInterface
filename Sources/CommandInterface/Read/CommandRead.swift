@@ -44,33 +44,33 @@ public struct CommandReadManager<Content> {
             storage.move(to: .left, length: len)
         }
         
-        while let next = __consumeNext() {
+        while let next = NextChar.consumeNext() {
             switch next {
             case .newline:
                 Swift.print("\n", terminator: "")
                 fflush(stdout)
                 return storage
                 
-            case .tab:
-                if let defaultValue = defaultValueLiteral,
-                   defaultValue.hasPrefix(String(storage.buffer)),
-                   storage.cursor == storage.buffer.count || storage.buffer.isEmpty {
-                    var value = defaultValue
-                    if !storage.buffer.isEmpty {
-                        for _ in 1...storage.cursor {
-                            value.removeFirst()
-                        }
-                    }
-                    storage.insertAtCursor(value)
-                }
-                
-            case .char(let char):
-                if contentType.defaultValue != nil, printDefault,
-                   storage.cursor < storage.buffer.count,
-                   storage.buffer[storage.cursor] != char {
-                    storage.eraseFromCursorToEndOfLine()
-                }
-                storage.write(char)
+//            case .tab:
+//                if let defaultValue = defaultValueLiteral,
+//                   defaultValue.hasPrefix(String(storage.buffer)),
+//                   storage.cursor == storage.buffer.count || storage.buffer.isEmpty {
+//                    var value = defaultValue
+//                    if !storage.buffer.isEmpty {
+//                        for _ in 1...storage.cursor {
+//                            value.removeFirst()
+//                        }
+//                    }
+//                    storage.insertAtCursor(value)
+//                }
+//                
+//            case .char(let char):
+//                if contentType.defaultValue != nil, printDefault,
+//                   storage.cursor < storage.buffer.count,
+//                   storage.buffer[storage.cursor] != char {
+//                    storage.eraseFromCursorToEndOfLine()
+//                }
+//                storage.write(char)
                 
             default:
                 storage.handle(next)

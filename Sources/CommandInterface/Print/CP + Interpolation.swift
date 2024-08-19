@@ -19,8 +19,48 @@ extension CommandPrintManager {
         var words: [Word]
         
         public var description: String {
-            self.words.reduce("") { $0 + $1.modifier.modify($1.content) }
+            let interpolation = getInterpolation()
+            return interpolation.words.reduce("") { $0 + $1.modifier.modify($1.content) }
         }
+        
+        public func getInterpolation() -> Interpolation {
+            let string = self.words.reduce("") { $0 + $1.modifier.modify($1.content) }
+            do {
+                let parsedContent = try AttributedString(markdown: string, options: .init(interpretedSyntax: .inlineOnly, failurePolicy: .returnPartiallyParsedIfPossible))
+                var interpolation = CommandPrintManager.Interpolation(literalCapacity: 0, interpolationCount: 1)
+                interpolation.appendInterpolation(parsedContent)
+                
+                return interpolation
+            } catch {
+                let logger = Logger(subsystem: "CommandInterface", category: "Markdown Parsing")
+                logger.error("\(#function) cannot parse markdown: \"\(string)\". It will not be treated as markdown.")
+                return self
+            }
+        }
+        
+        public func getRaw() -> String {
+            let string = self.words.reduce("") { $0 + $1.content }
+            var cumulative = ""
+            cumulative.reserveCapacity(string.count)
+            var index = string.startIndex
+            var isOpened = false
+            
+            while index < string.endIndex {
+                let char = string[index]
+                if char == Terminal.escape {
+                    isOpened = true
+                } else if isOpened && char == "m" {
+                    isOpened = false
+                } else if !isOpened {
+                    cumulative.append(char)
+                }
+                
+                string.formIndex(after: &index)
+            }
+            
+            return cumulative
+        }
+        
         
         public init(literalCapacity: Int, interpolationCount: Int) {
             self.words = []

@@ -10,9 +10,12 @@ import Stratum
 struct Command: CommandInterface, ParsableCommand {
     
     mutating func run() throws {
-        var string = AttributedString("12345")
+        Terminal.setRawMode()
         
-        print("The sum is \(string, modifiers: .foregroundColor(.rgb(100, 100, 10)), .blinking).")
+        while true {
+            let input = self.read(.string.default("abcd").stopSequence(/\?/), prompt: "read: ")
+            print(">>>> \(input)")
+        }
     }
     
 }

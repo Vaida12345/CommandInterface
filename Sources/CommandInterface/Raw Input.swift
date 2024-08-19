@@ -21,74 +21,83 @@ public enum NextChar: Equatable {
     case escape(Character)
     case badSymbol
     case empty
+    
+    /// Consume and returns next char.
+    ///
+    /// You need to ensure the Terminal is in raw mode by ``Terminal/setRawMode()``
+    ///
+    /// - Note: You need to `fflush` to push output.
+    public static func consumeNext() -> NextChar? {
+        let inputHandle = FileHandle.standardInput
+        guard let next = try? inputHandle.read(upToCount: 1), let char = next.first else { return nil }
+        
+        switch char {
+        case 27: // escape char
+            if let next = try? inputHandle.read(upToCount: 2), let strings = String(data: next, encoding: .utf8) {
+                let char = [Character](strings)
+                if char.count == 2, char[0] == "[" {
+                    switch char[1] {
+                    case "A":
+                        return .up
+                    case "B":
+                        return .down
+                    case "C":
+                        return .right
+                    case "D":
+                        return .left
+                    default:
+                        return .escape(char[1])
+                    }
+                } else {
+                    return .badSymbol
+                }
+            } else {
+                return .badSymbol
+            }
+            
+        case 9:
+            return .tab
+            
+        case 10:
+            return .newline
+            
+        case 127:
+            return .delete
+            
+        default:
+            if let width = UTF8.width(startsWith: char), width != 1 {
+                if var next = try? inputHandle.read(upToCount: width - 1) {
+                    next.insert(char, at: 0)
+                    var iterator = next.makeIterator()
+                    
+                    var utf = UTF8()
+                    
+                    while true {
+                        switch utf.decode(&iterator) {
+                        case .scalarValue(let v): return .char(Character(v))
+                        case .emptyInput: return .empty
+                        case .error: return .badSymbol
+                        }
+                    }
+                } else {
+                    return .badSymbol
+                }
+            }
+            
+            return .char(Character(UnicodeScalar(char)))
+        }
+    }
 }
 
 
 /// Consume and returns next char.
 ///
-/// To use this, you must define the following in the function in which this is called.
+/// You need to ensure the Terminal is in raw mode by ``Terminal/setRawMode()``
 ///
 /// - Note: You need to `fflush` to push output.
+@available(*, deprecated, renamed: "NextChar.consumeNext()")
 public func __consumeNext() -> NextChar? {
-    
-    let inputHandle = FileHandle.standardInput
-    guard let next = try? inputHandle.read(upToCount: 1), let char = next.first else { return nil }
-    
-    switch char {
-    case 27: // escape char
-        if let next = try? inputHandle.read(upToCount: 2), let strings = String(data: next, encoding: .utf8) {
-            let char = [Character](strings)
-            if char.count == 2, char[0] == "[" {
-                switch char[1] {
-                case "A":
-                    return .up
-                case "B":
-                    return .down
-                case "C":
-                    return .right
-                case "D":
-                    return .left
-                default:
-                    return .escape(char[1])
-                }
-            } else {
-                return .badSymbol
-            }
-        } else {
-            return .badSymbol
-        }
-        
-    case 9:
-        return .tab
-        
-    case 10:
-        return .newline
-        
-    case 127:
-        return .delete
-        
-    default:
-        if let width = UTF8.width(startsWith: char), width != 1 {
-            if var next = try? inputHandle.read(upToCount: width - 1) {
-                next.insert(char, at: 0)
-                var iterator = next.makeIterator()
-                
-                var utf = UTF8()
-                
-                while true {
-                    switch utf.decode(&iterator) {
-                    case .scalarValue(let v): return .char(Character(v))
-                    case .emptyInput: return .empty
-                    case .error: return .badSymbol
-                    }
-                }
-            } else {
-                return .badSymbol
-            }
-        }
-        
-        return .char(Character(UnicodeScalar(char)))
-    }
+    NextChar.consumeNext()
 }
 
 
@@ -126,13 +135,13 @@ public func __resetTerminal(originalTerm: inout termios) {
 /// Any mutation on the storage is reflected on the Terminal.
 public struct StandardInputStorage {
     
-    public var buffer: [Character]
+    /// The unformatted buffer.
+    private var buffer: [Character]
     
     /// The cursor records the position using number of `Character`s, not count of utf8.
     public var cursor: Int
     
     
-    @inlinable
     @discardableResult
     public mutating func move(to direction: Direction) -> Int? {
         switch direction {
@@ -162,13 +171,23 @@ public struct StandardInputStorage {
         }
     }
     
-    @inlinable
+    /// Gets the buffer.
     public func get() -> String {
         String(self.buffer)
     }
     
+    /// Gets the content before cursor.
+    public func getBeforeCursor() -> String {
+        return String(self.buffer[0..<cursor])
+    }
+    
+    /// Gets the char at cursor.
+    public func getCursorChar() -> Character? {
+        guard self.cursor < self.buffer.count else { return nil }
+        return self.buffer[self.cursor]
+    }
+    
     /// Delete the value right before the cursor, which is the normal use of delete.
-    @inlinable
     public mutating func deleteBeforeCursor() {
         if cursor > 0 && cursor <= buffer.count, let dis = move(to: .left) {
             for _ in 1...dis {
@@ -180,7 +199,6 @@ public struct StandardInputStorage {
         }
     }
     
-    @inlinable
     public mutating func insertAtCursor(_ value: Character) {
         if cursor == buffer.count {
             print(value, terminator: "")
@@ -194,7 +212,7 @@ public struct StandardInputStorage {
         cursor += 1
     }
     
-    @inlinable
+    /// Write the `value`, replacing any existing characters.
     public mutating func write(_ value: Character) {
         print(value, terminator: "")
         fflush(stdout);
@@ -206,6 +224,7 @@ public struct StandardInputStorage {
         cursor += 1
     }
     
+    /// Write the `value`, replacing any existing characters.
     @inlinable
     public mutating func write(_ value: String) {
         for char in value {
@@ -215,10 +234,11 @@ public struct StandardInputStorage {
     
     
     public mutating func write(formatted item: CommandPrintManager.Interpolation) -> Int {
+        let item = item.getInterpolation()
         print(item.description, terminator: "")
         fflush(stdout)
         
-        let raw = item.words.reduce("") { $0 + $1.content }
+        let raw = item.getRaw()
         for _ in cursor..<min(buffer.count, raw.count + cursor) {
             buffer.remove(at: cursor)
         }
@@ -227,7 +247,6 @@ public struct StandardInputStorage {
         return raw.count
     }
     
-    @inlinable
     @discardableResult
     public mutating func insertAtCursor(_ value: String) -> Int {
         if cursor == buffer.count {
@@ -263,7 +282,10 @@ public struct StandardInputStorage {
     
     @discardableResult
     public mutating func insertAtCursor(formatted item: CommandPrintManager.Interpolation) -> Int {
-        let raw = item.words.reduce("") { $0 + $1.content }
+        let item = item.getInterpolation()
+        let raw = item.getRaw()
+        
+//        print(">>>\(raw)<<<")
         
         guard !raw.isEmpty else { return 0 }
         if cursor == buffer.count {
@@ -285,7 +307,6 @@ public struct StandardInputStorage {
     }
     
     /// Clear entered values as recorded by `self`.
-    @inlinable
     @discardableResult
     public mutating func clearEntered() -> String {
         defer {
@@ -333,7 +354,6 @@ public struct StandardInputStorage {
         case left, right
     }
     
-    @inlinable
     public init(buffer: [Character] = [], cursor: Int = 0) {
         self.buffer = buffer
         self.cursor = cursor

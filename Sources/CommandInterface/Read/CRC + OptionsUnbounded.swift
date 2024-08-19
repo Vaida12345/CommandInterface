@@ -57,7 +57,7 @@ extension CommandReadableContent where Content == String {
         var lastInput: NextChar? = nil
         var __buffer: [Character] = []
         
-        while let key = __consumeNext() {
+        while let key = NextChar.consumeNext() {
             switch key {
             case .up: // Up arrow, rotate
                 if !showInitial {
@@ -81,39 +81,39 @@ extension CommandReadableContent where Content == String {
                 storage.move(to: .right)
             case .left: // Left arrow, do nothing
                 storage.move(to: .left)
-            case .tab: // Tab key
-                       //            print("    ", terminator: "")
-                       //
-                       //            buffer.append(contentsOf: "    ")
-                       //            cursor += 4
-                if lastInput != .tab {
-                    __buffer = storage.buffer
-                } else {
-                    rotateMatchingDown()
-                }
-                guard !matching.isEmpty else { continue }
-                let match = matching[matchingRotate]
-                storage.clearEntered()
-                
-                storage.insertAtCursor(match)
-            case .newline: // Enter key
-                print("\n", terminator: "")
-                
-                return String(storage.buffer)
-            case .delete: // Backspace key
-                storage.deleteBeforeCursor()
-            case .char(let value): // Other characters
-                if override {
-                    if storage.buffer.count > storage.cursor, value == storage.buffer[storage.cursor] {
-                        storage.write(value)
-                    } else {
-                        storage.eraseFromCursorToEndOfLine()
-                        storage.write(value)
-                        override = false
-                    }
-                } else {
-                    storage.insertAtCursor(value)
-                }
+//            case .tab: // Tab key
+//                       //            print("    ", terminator: "")
+//                       //
+//                       //            buffer.append(contentsOf: "    ")
+//                       //            cursor += 4
+//                if lastInput != .tab {
+//                    __buffer = storage.buffer
+//                } else {
+//                    rotateMatchingDown()
+//                }
+//                guard !matching.isEmpty else { continue }
+//                let match = matching[matchingRotate]
+//                storage.clearEntered()
+//                
+//                storage.insertAtCursor(match)
+//            case .newline: // Enter key
+//                print("\n", terminator: "")
+//                
+//                return String(storage.buffer)
+//            case .delete: // Backspace key
+//                storage.deleteBeforeCursor()
+//            case .char(let value): // Other characters
+//                if override {
+//                    if storage.buffer.count > storage.cursor, value == storage.buffer[storage.cursor] {
+//                        storage.write(value)
+//                    } else {
+//                        storage.eraseFromCursorToEndOfLine()
+//                        storage.write(value)
+//                        override = false
+//                    }
+//                } else {
+//                    storage.insertAtCursor(value)
+//                }
             default:
                 continue
             }

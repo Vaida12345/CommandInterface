@@ -99,6 +99,7 @@ public struct Terminal {
     /// Terminal raw mode is a mode in which the terminal operates without processing input or output, meaning it doesn't interpret special characters like `⌃+C` or `⏎` and doesn't echo typed characters back to the screen. This mode allows programs to have full control over user input, which is useful for implementing custom key handling, like in text editors or command-line interfaces.
     public static func setRawMode() {
         fflush(stdout)
+        guard self.originalTerminal == nil else { return } // a;ready set
         
         var originalTerm = termios()
         var rawTerm = termios()
@@ -114,15 +115,18 @@ public struct Terminal {
         
         tcsetattr(STDIN_FILENO, TCSANOW, &rawTerm)
         
-        if self.originalTerminal == nil {
-            self.originalTerminal = originalTerm
-        }
+        self.originalTerminal = originalTerm
     }
     
     /// Reset the terminal to original mode.
     public static func reset() {
         guard var terminal = self.originalTerminal else { return }
         tcsetattr(STDIN_FILENO, TCSANOW, &terminal)
+        self.originalTerminal = nil
+    }
+    
+    public static var defaultInterface: DefaultInterface {
+        .default
     }
     
 }

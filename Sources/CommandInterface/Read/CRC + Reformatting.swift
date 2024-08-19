@@ -32,34 +32,34 @@ extension CommandReadableContent where Content == String {
             storage.move(to: .left, length: len)
         }
         
-        while let next = __consumeNext() {
+        while let next = NextChar.consumeNext() {
             switch next {
             case .newline:
                 Swift.print("\n", terminator: "")
                 fflush(stdout)
                 return storage
                 
-            case .tab:
-                if let defaultValue = defaultValueLiteral,
-                   defaultValue.hasPrefix(String(storage.buffer)),
-                   storage.cursor == storage.buffer.count || storage.buffer.isEmpty {
-                    var value = defaultValue
-                    if !storage.buffer.isEmpty {
-                        for _ in 1...storage.cursor {
-                            value.removeFirst()
-                        }
-                    }
-                    storage.insertAtCursor(value)
-                }
-                
-            case .char(let char):
-                if manager.contentType.defaultValue != nil, printDefault,
-                   storage.cursor < storage.buffer.count,
-                   storage.buffer[storage.cursor] != char {
-                    storage.eraseFromCursorToEndOfLine()
-                }
-                storage.insertAtCursor(char)
-                
+//            case .tab:
+//                if let defaultValue = defaultValueLiteral,
+//                   defaultValue.hasPrefix(String(storage.buffer)),
+//                   storage.cursor == storage.buffer.count || storage.buffer.isEmpty {
+//                    var value = defaultValue
+//                    if !storage.buffer.isEmpty {
+//                        for _ in 1...storage.cursor {
+//                            value.removeFirst()
+//                        }
+//                    }
+//                    storage.insertAtCursor(value)
+//                }
+//                
+//            case .char(let char):
+//                if manager.contentType.defaultValue != nil, printDefault,
+//                   storage.cursor < storage.buffer.count,
+//                   storage.buffer[storage.cursor] != char {
+//                    storage.eraseFromCursorToEndOfLine()
+//                }
+//                storage.insertAtCursor(char)
+//                
             default:
                 storage.handle(next)
             }
@@ -88,10 +88,10 @@ extension CommandReadableContent where Content == String {
             fflush(stdout)
             return __getLoop(manager: manager, printPrompt: false, formatter: formatter)
         }
-        
-        if let defaultValue = manager.contentType.defaultValue, read.buffer.isEmpty {
-            return defaultValue
-        }
+//        
+//        if let defaultValue = manager.contentType.defaultValue, read.buffer.isEmpty {
+//            return defaultValue
+//        }
         
         do {
             let contents = read.get()

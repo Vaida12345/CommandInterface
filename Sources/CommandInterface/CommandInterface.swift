@@ -58,19 +58,7 @@ public extension CommandInterface {
     /// ```
     func print(_ item: CommandPrintManager.Interpolation, terminator: String = "\n") {
         let contents = item.description
-        
-        do {
-            let parsedContent = try AttributedString(markdown: contents, options: .init(interpretedSyntax: .inlineOnly, failurePolicy: .returnPartiallyParsedIfPossible))
-            var interpolation = CommandPrintManager.Interpolation(literalCapacity: 0, interpolationCount: 1)
-            interpolation.appendInterpolation(parsedContent)
-            
-            Swift.print(interpolation.description, terminator: terminator)
-        } catch {
-            let logger = Logger(subsystem: "CommandInterface", category: "Markdown Parsing")
-            logger.error("\(#function) cannot parse markdown: \"\(contents)\". It will not be treated as markdown.")
-            Swift.print(contents, terminator: terminator)
-        }
-        
+        Swift.print(contents, terminator: terminator)
         fflush(stdout)
     }
     
@@ -107,9 +95,20 @@ public extension CommandInterface {
     ///   - contentType: The content type for reading. See ``CommandReadableContent``.
     ///   - prompt: The prompt shown to the user.
     ///   - condition: The condition that will be matched against.
-    func read<Content>(_ contentType: CommandReadableContent<Content>, prompt: CommandPrintManager.Interpolation,
-                       condition: ((_ content: Content) throws -> Bool)? = nil) -> Content {
-        CommandReadManager(prompt: prompt, contentType: contentType, condition: contentType.condition ?? condition).get()
+//    func read<Content>(
+//        _ contentType: CommandReadableContent<Content>,
+//        prompt: CommandPrintManager.Interpolation,
+//        condition: ((_ content: Content) throws -> Bool)? = nil
+//    ) -> Content {
+//        CommandReadManager(prompt: prompt, contentType: contentType, condition: contentType.condition ?? condition).get()
+//    }
+    
+    func read<T>(
+        _ contentType: T,
+        prompt: CommandPrintManager.Interpolation,
+        condition: ((_ content: T.Content) throws -> Bool)? = nil
+    ) -> T.Content where T: CommandReadable {
+        contentType.getLoop(_CommandReadableManager(prompt: prompt, condition: condition))
     }
     
     

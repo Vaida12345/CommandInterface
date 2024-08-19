@@ -25,7 +25,12 @@ let package = Package (
             ],
             swiftSettings: [.unsafeFlags(["-enable-bare-slash-regex"])]
         ),
-        .testTarget(name: "CommandInterfaceTests", dependencies: ["CommandInterface"]),
+        .testTarget(
+            name: "Tests",
+            dependencies: ["CommandInterface", "Stratum"],
+            path: "Tests",
+            swiftSettings: [.unsafeFlags(["-enable-bare-slash-regex"])]
+        ),
         .target(name: "CICComponent"),
         .executableTarget(
             name: "Client",
@@ -37,5 +42,6 @@ let package = Package (
             path: "Client",
             swiftSettings: [.unsafeFlags(["-enable-bare-slash-regex"])]
         )
-    ]
+    ],
+    swiftLanguageModes: [.v5]
 )
