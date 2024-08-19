@@ -21,17 +21,12 @@ public protocol CommandReadable {
     /// The default implementation returns `true`.
     func condition(content: Content) throws -> Bool
     
-    /// The default value.
-    ///
-    /// The default implementation returns `nil`.
-    var defaultValue: Content? { get }
-    
     /// A sequence of `String`s that halts input processing and returns when the entire input matches any element in the sequence.
     ///
     /// The default implementation returns `[]`.
     var stopSequence: [Regex<Substring>] { get }
     
-    /// The default value formatter.
+    /// The value formatter.
     ///
     /// This function is used to format the default value when printed. The default implementation returns the default description.
     func formatter(content: Content) -> String
@@ -63,10 +58,6 @@ public extension CommandReadable {
         true
     }
     
-    var defaultValue: Content? {
-        nil
-    }
-    
     var stopSequence: [Regex<Substring>] {
         []
     }
@@ -74,27 +65,26 @@ public extension CommandReadable {
     
     private func getLoopRecursion(manager: _CommandReadableManager<Content>) -> Content {
         Terminal.bell()
-        DefaultInterface.default.print("\("Try Again\n", modifier: .foregroundColor(.yellow), .bold)", terminator: "")
         return getLoop(manager)
     }
     
     func getLoop(_ manager: _CommandReadableManager<Content>) -> Content {
         DefaultInterface.default.print(manager.prompt, terminator: "")
         
+        let line = Terminal.cursor.currentPosition().line
+        
         guard let input = self.readUserInput() else {
             return getLoopRecursion(manager: manager)
-        }
-        
-        if input.isEmpty, let defaultValue {
-            return defaultValue
         }
         
         do {
             guard let content = try transform(input: input),
                   try manager.condition?(content) ?? true,
                   try condition(content: content) else {
-                throw ReadError(reason: "Invalid Input.")
+                throw ReadError(reason: "Invalid Input, please try again")
             }
+            
+            Terminal.eraseFromCursorToEndOfScreen()
             
             return content
         } catch {
@@ -104,16 +94,16 @@ public extension CommandReadable {
                 DefaultInterface.default.print("\((error as NSError).localizedDescription, modifier: .foregroundColor(.red))")
             }
             
+            Terminal.cursor.moveTo(line: line, column: 0)
+            Terminal.clearLine()
+            
             return getLoopRecursion(manager: manager)
         }
     }
     
     func readUserInput() -> String? {
-        if let defaultValue = self.defaultValue.map(formatter(content:)) {
-            return readUserInputWithDefault(default: defaultValue)
-        }
-        
         var storage = StandardInputStorage()
+        
         while let next = NextChar.consumeNext() {
             switch next {
             case .newline:
@@ -124,45 +114,6 @@ public extension CommandReadable {
             case .tab:
                 // do nothing
                 break
-                
-            default:
-                storage.handle(next)
-            }
-            
-            let string = storage.get()
-            if self.stopSequence.contains(where: { (try? $0.wholeMatch(in: string)) != nil }) {
-                return string
-            }
-        }
-        
-        return nil
-    }
-    
-    func readUserInputWithDefault(default defaultValue: String) -> String? {
-        var storage = StandardInputStorage()
-        
-        var autocompleteLength = storage.insertAtCursor(formatted: "\(defaultValue, modifier: .dim)")
-        storage.move(to: .left, length: autocompleteLength)
-        
-        while let next = NextChar.consumeNext() {
-            switch next {
-            case .newline:
-                Swift.print("\n", terminator: "")
-                fflush(stdout)
-                return storage.get()
-                
-            case .tab:
-                if defaultValue.hasPrefix(storage.get()) {
-                    var value = defaultValue
-                    value.removeFirst(storage.get().count)
-                    storage.write(value)
-                }
-                
-            case .char(let char):
-                if storage.getCursorChar() != char {
-                    storage.eraseFromCursorToEndOfLine()
-                }
-                storage.write(char)
                 
             default:
                 storage.handle(next)

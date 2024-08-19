@@ -16,8 +16,6 @@ public struct CommandReadableOptions: CommandReadable {
         input
     }
     
-    public var defaultValue: Content?
-    
     public func condition(content: String) throws -> Bool {
         options.contains(content)
     }
@@ -25,7 +23,6 @@ public struct CommandReadableOptions: CommandReadable {
     public func readUserInput() -> String? {
         var storage = StandardInputStorage()
         var override = true // override for default
-        let defaultValue = self.defaultValue.map(formatter(content:))
         
         var rotate = 0
         func rotateUp() {
@@ -123,24 +120,14 @@ public struct CommandReadableOptions: CommandReadable {
     
 }
 
-extension CommandReadable {
+extension CommandReadable where Self == CommandReadableOptions {
     
     public static func options(
         _ options: [String]
-    ) -> CommandReadableOptions where Self == CommandReadableOptions {
+    ) -> CommandReadableOptions {
         CommandReadableOptions(options: options)
     }
     
     // where Option: RawRepresentable & CaseIterable, Option.RawValue == String, Self == CommandReadableOptions<Option>
-    
-}
-
-
-extension CommandReadableOptions {
-    
-    /// Provides the default value.
-    public func `default`(_ content: Content) -> CommandReadableOptions {
-        CommandReadableOptions(options: self.options, defaultValue: defaultValue)
-    }
     
 }

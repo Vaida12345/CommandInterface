@@ -46,8 +46,8 @@ public struct Terminal {
     /// ```
     @inlinable
     public static func clearLine() {
-        print("\(escape)[2K", terminator: "")
-        print("\(escape)[0G", terminator: "")
+        print("\(escape)[2K", terminator: "") // erase the entire line
+        print("\(escape)[0G", terminator: "") // moves cursor to column 0
         fflush(stdout);
     }
     
@@ -79,6 +79,12 @@ public struct Terminal {
     @inlinable
     public static func eraseFromCursorToEndOfLine() {
         print("\(escape)[0K", terminator: "")
+        fflush(stdout);
+    }
+    
+    @inlinable
+    public static func eraseFromCursorToEndOfScreen() {
+        print("\(escape)[0J", terminator: "")
         fflush(stdout);
     }
     
@@ -127,6 +133,17 @@ public struct Terminal {
     
     public static var defaultInterface: DefaultInterface {
         .default
+    }
+    
+    /// The size of current Terminal window.
+    @inlinable
+    public static func windowSize() -> (width: Int, height: Int)? {
+        var w = winsize()
+        if ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == 0 {
+            return (width: Int(w.ws_col), height: Int(w.ws_row))
+        } else {
+            return nil
+        }
     }
     
 }

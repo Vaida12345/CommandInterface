@@ -15,7 +15,7 @@ public struct StandardInputStorage {
     private var buffer: [Character]
     
     /// The cursor records the position using number of `Character`s, not count of utf8.
-    public var cursor: Int
+    public private(set) var cursor: Int
     
     
     @discardableResult
@@ -40,11 +40,24 @@ public struct StandardInputStorage {
         return nil
     }
     
-    @inlinable
+    
     public mutating func move(to direction: Direction, length: Int) {
-        for _ in 1...length {
-            move(to: direction)
+        if length == 0 {
+            return
+        } else if length < 0 {
+            for _ in 1...abs(length) {
+                move(to: direction.opposite())
+            }
+        } else {
+            for _ in 1...length {
+                move(to: direction)
+            }
         }
+    }
+    
+    /// The number of elements in the buffer.
+    public var count: Int {
+        self.buffer.count
     }
     
     /// Gets the buffer.
@@ -224,6 +237,15 @@ public struct StandardInputStorage {
     
     public enum Direction {
         case left, right
+        
+        func opposite() -> Direction {
+            switch self {
+            case .left:
+                    .right
+            case .right:
+                    .left
+            }
+        }
     }
     
     public init(buffer: [Character] = [], cursor: Int = 0) {

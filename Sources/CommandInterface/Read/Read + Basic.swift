@@ -17,9 +17,7 @@ public struct CommandReadableGeneric<Content>: CommandReadable {
     
     let formatter: (_ content: Content) -> String
     
-    public var defaultValue: Content?
-    
-    public var stopSequence: [Regex<Substring>] = []
+    public let stopSequence: [Regex<Substring>]
     
     
     public func transform(input: String) throws -> Content? {
@@ -40,7 +38,7 @@ public struct CommandReadableGeneric<Content>: CommandReadable {
         condition: @escaping (_ content: Content) throws -> Bool = { _ in true },
         formatter: @escaping (_ content: Content) -> String = { "\($0)" }
     ) -> CommandReadableGeneric {
-        CommandReadableGeneric(transform: transform, condition: condition, formatter: formatter)
+        CommandReadableGeneric(transform: transform, condition: condition, formatter: formatter, stopSequence: [])
     }
     
 }
@@ -49,8 +47,8 @@ public struct CommandReadableGeneric<Content>: CommandReadable {
 extension CommandReadableGeneric {
     
     /// Provides the default value.
-    public func `default`(_ content: Content) -> CommandReadableGeneric {
-        CommandReadableGeneric(transform: self.transform, condition: self.condition, formatter: self.formatter, defaultValue: content, stopSequence: self.stopSequence)
+    public func `default`(_ content: Content) -> CommandReadableDefaultableGeneric<Content> {
+        CommandReadableDefaultableGeneric(transform: self.transform, condition: self.condition, formatter: self.formatter, stopSequence: self.stopSequence, defaultValue: content)
     }
     
     /// Provides the stop sequence.
@@ -66,7 +64,7 @@ extension CommandReadableGeneric {
     /// - Parameters:
     ///   - sequence: A sequence of `String`s that halts input processing and returns when the entire input matches any element in the sequence.
     public func stopSequence(_ sequence: [Regex<Substring>]) -> CommandReadableGeneric {
-        CommandReadableGeneric(transform: self.transform, condition: self.condition, formatter: self.formatter, defaultValue: self.defaultValue, stopSequence: sequence)
+        CommandReadableGeneric(transform: self.transform, condition: self.condition, formatter: self.formatter, stopSequence: sequence)
     }
     
     /// Provides the stop sequence.
@@ -155,7 +153,7 @@ extension CommandReadable {
         condition: @escaping (_ content: Content) throws -> Bool = { _ in true },
         formatter: @escaping (_ content: Content) -> String = { "\($0)" }
     ) -> CommandReadableGeneric<Content> {
-        CommandReadableGeneric(transform: transform, condition: condition, formatter: formatter)
+        CommandReadableGeneric(transform: transform, condition: condition, formatter: formatter, stopSequence: [])
     }
     
 }
