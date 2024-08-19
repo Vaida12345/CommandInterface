@@ -13,7 +13,7 @@ struct Command: CommandInterface, ParsableCommand {
         Terminal.setRawMode()
         
         while true {
-            let input = self.read(.string.default("abcd").stopSequence(/\?/), prompt: "read: ")
+            let input = self.read(.string.default("yes"), prompt: "")
             print(">>>> \(input)")
         }
     }

@@ -1,135 +1,11 @@
 //
-//  Raw Input.swift
+//  StandardInputStorage.swift
+//  CommandInterface
 //
-//
-//  Created by Vaida on 6/7/24.
+//  Created by Vaida on 8/19/24.
 //
 
 import Foundation
-
-
-public enum NextChar: Equatable {
-    case up
-    case down
-    case right
-    case left
-    case tab
-    case newline
-    case delete
-    /// The full variadic unicode.
-    case char(Character)
-    case escape(Character)
-    case badSymbol
-    case empty
-    
-    /// Consume and returns next char.
-    ///
-    /// You need to ensure the Terminal is in raw mode by ``Terminal/setRawMode()``
-    ///
-    /// - Note: You need to `fflush` to push output.
-    public static func consumeNext() -> NextChar? {
-        let inputHandle = FileHandle.standardInput
-        guard let next = try? inputHandle.read(upToCount: 1), let char = next.first else { return nil }
-        
-        switch char {
-        case 27: // escape char
-            if let next = try? inputHandle.read(upToCount: 2), let strings = String(data: next, encoding: .utf8) {
-                let char = [Character](strings)
-                if char.count == 2, char[0] == "[" {
-                    switch char[1] {
-                    case "A":
-                        return .up
-                    case "B":
-                        return .down
-                    case "C":
-                        return .right
-                    case "D":
-                        return .left
-                    default:
-                        return .escape(char[1])
-                    }
-                } else {
-                    return .badSymbol
-                }
-            } else {
-                return .badSymbol
-            }
-            
-        case 9:
-            return .tab
-            
-        case 10:
-            return .newline
-            
-        case 127:
-            return .delete
-            
-        default:
-            if let width = UTF8.width(startsWith: char), width != 1 {
-                if var next = try? inputHandle.read(upToCount: width - 1) {
-                    next.insert(char, at: 0)
-                    var iterator = next.makeIterator()
-                    
-                    var utf = UTF8()
-                    
-                    while true {
-                        switch utf.decode(&iterator) {
-                        case .scalarValue(let v): return .char(Character(v))
-                        case .emptyInput: return .empty
-                        case .error: return .badSymbol
-                        }
-                    }
-                } else {
-                    return .badSymbol
-                }
-            }
-            
-            return .char(Character(UnicodeScalar(char)))
-        }
-    }
-}
-
-
-/// Consume and returns next char.
-///
-/// You need to ensure the Terminal is in raw mode by ``Terminal/setRawMode()``
-///
-/// - Note: You need to `fflush` to push output.
-@available(*, deprecated, renamed: "NextChar.consumeNext()")
-public func __consumeNext() -> NextChar? {
-    NextChar.consumeNext()
-}
-
-
-// Function to set the terminal to raw mode
-@available(*, deprecated, renamed: "Terminal.setRawMode()", message: "Use the public interface instead.")
-@inlinable
-public func __setRawMode() -> termios {
-    fflush(stdout)
-    
-    var originalTerm = termios()
-    var rawTerm = termios()
-    
-    // Get the current terminal settings
-    tcgetattr(STDIN_FILENO, &originalTerm)
-    rawTerm = originalTerm
-    
-    // Set the terminal to raw mode
-    rawTerm.c_lflag &= ~(UInt(ICANON | ECHO))
-    rawTerm.c_cc.0 = 1 // VMIN
-    rawTerm.c_cc.1 = 0 // VTIME
-    
-    tcsetattr(STDIN_FILENO, TCSANOW, &rawTerm)
-    
-    return originalTerm
-}
-
-// Function to reset the terminal to its original settings
-@available(*, deprecated, renamed: "Terminal.reset()", message: "Use the public interface instead.")
-@inlinable
-public func __resetTerminal(originalTerm: inout termios) {
-    tcsetattr(STDIN_FILENO, TCSANOW, &originalTerm)
-}
 
 
 /// Any mutation on the storage is reflected on the Terminal.
@@ -187,7 +63,7 @@ public struct StandardInputStorage {
         return self.buffer[self.cursor]
     }
     
-    /// Delete the value right before the cursor, which is the normal use of delete.
+    /// Delete the value immediately before the cursor, which is the normal use of delete.
     public mutating func deleteBeforeCursor() {
         if cursor > 0 && cursor <= buffer.count, let dis = move(to: .left) {
             for _ in 1...dis {
@@ -265,12 +141,10 @@ public struct StandardInputStorage {
     }
     
     public mutating func eraseFromCursorToEndOfLine() {
-        let pos = self.cursor
-        seekToEnd()
+        Terminal.eraseFromCursorToEndOfLine()
         
-        while self.cursor > pos {
-            self.deleteBeforeCursor()
-        }
+        let count = self.buffer.count - self.cursor
+        self.buffer.removeLast(count)
     }
     
     public mutating func seekToEnd() {
@@ -284,8 +158,6 @@ public struct StandardInputStorage {
     public mutating func insertAtCursor(formatted item: CommandPrintManager.Interpolation) -> Int {
         let item = item.getInterpolation()
         let raw = item.getRaw()
-        
-//        print(">>>\(raw)<<<")
         
         guard !raw.isEmpty else { return 0 }
         if cursor == buffer.count {

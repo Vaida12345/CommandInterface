@@ -99,7 +99,7 @@ extension CommandReadable where Self == CommandReadableGeneric<Bool> {
             case "no", "n", "false":
                 return false
             default:
-                return nil
+                throw ReadError(reason: "Not a boolean value.")
             }
         } formatter: {
             $0 ? "yes" : "no"

@@ -74,7 +74,7 @@ public extension CommandReadable {
     
     private func getLoopRecursion(manager: _CommandReadableManager<Content>) -> Content {
         Terminal.bell()
-        DefaultInterface.default.print("\("Try Again\n", modifier: .foregroundColor(.red), .bold)", terminator: "")
+        DefaultInterface.default.print("\("Try Again\n", modifier: .foregroundColor(.yellow), .bold)", terminator: "")
         return getLoop(manager)
     }
     

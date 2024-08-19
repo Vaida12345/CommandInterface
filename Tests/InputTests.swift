@@ -50,7 +50,19 @@ struct InputTests {
         }
         
         let string = try String(data: handle.readToEnd()!, encoding: .utf8)
-        let match = "read: ^[[2mabcd^[[0m^[[1D^[[1D^[[1D^[[1D^[[1C^[[1C^[[1C^[[1C^[[1D^[[P^[[1D^[[P^[[1D^[[P^[[1D^[[P?".replacingOccurrences(of: "^[", with: "\(Terminal.escape)") + ">>>?"
+        let match = "read: ^[[2mabcd^[[0m^[[1D^[[1D^[[1D^[[1D^[[0K?".replacingOccurrences(of: "^[", with: "\(Terminal.escape)") + ">>>?"
+        #expect(string == match)
+    }
+    
+    @Test func transformedInput() async throws {
+        let handle = try withStandardOutputCaptured {
+            simulateUserInput("\n")
+            let string = Terminal.defaultInterface.read(.bool.default(true), prompt: "")
+            Terminal.defaultInterface.print(">>>\(string)", terminator: "")
+        }
+        
+        let string = try String(data: handle.readToEnd()!, encoding: .utf8)
+        let match = "^[[2myes^[[0m^[[1D^[[1D^[[1D".replacingOccurrences(of: "^[", with: "\(Terminal.escape)") + "\n>>>true"
         #expect(string == match)
     }
     
@@ -90,7 +102,7 @@ struct InputTests {
             }
             
             let string = try String(data: handle.readToEnd()!, encoding: .utf8)
-            let match = "read: ^[[2mabcd^[[0m^[[1D^[[1D^[[1D^[[1D^[[1C^[[1C^[[1C^[[1C^[[1D^[[P^[[1D^[[P^[[1D^[[P^[[1D^[[Pf".replacingOccurrences(of: "^[", with: "\(Terminal.escape)") + "\n>>>f"
+            let match = "read: ^[[2mabcd^[[0m^[[1D^[[1D^[[1D^[[1D^[[0Kf".replacingOccurrences(of: "^[", with: "\(Terminal.escape)") + "\n>>>f"
             #expect(string == match)
         }
         
@@ -126,7 +138,7 @@ struct InputTests {
             }
             
             let string = try String(data: handle.readToEnd()!, encoding: .utf8)
-            let match = "read: ^[[2mabcd^[[0m^[[1D^[[1D^[[1D^[[1D^[[1C^[[1C^[[1C^[[1C^[[1D^[[P^[[1D^[[P^[[1D^[[P^[[1D^[[Pf".replacingOccurrences(of: "^[", with: "\(Terminal.escape)") + "\n>>>f"
+            let match = "read: ^[[2mabcd^[[0m^[[1D^[[1D^[[1D^[[1D^[[0Kf".replacingOccurrences(of: "^[", with: "\(Terminal.escape)") + "\n>>>f"
             #expect(string == match)
         }
         
