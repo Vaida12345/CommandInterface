@@ -49,23 +49,32 @@ public struct CommandReadableDefaultableGeneric<Content>: CommandReadable {
                 fflush(stdout)
                 return storage.get()
                 
+            case .right:
+                if storage.cursor < storage.count - autocompleteLength {
+                    storage.handle(next)
+                } else {
+                    let content = storage.getBeforeCursor()
+                    if defaultValue.hasPrefix(content), autocompleteLength != 0 {
+                        var value = defaultValue
+                        value.removeFirst(content.count)
+                        let rightCount = value.count - 1
+                        storage.write(value)
+                        autocompleteLength = 0
+                        storage.move(to: .left, length: rightCount)
+                    }
+                }
+                
             case .tab:
                 let content = storage.getBeforeCursor()
-                if defaultValue.hasPrefix(content) {
+                if defaultValue.hasPrefix(content), autocompleteLength != 0 {
                     var value = defaultValue
                     value.removeFirst(content.count)
-                    //                    Swift.print(">>\(value)<<", terminator: "")
-                    fflush(stdout)
                     storage.write(value)
                     autocompleteLength = 0
                 }
                 
-            case .right:
-                if storage.cursor < storage.count - autocompleteLength {
-                    storage.handle(next)
-                }
-                
             case .delete:
+                guard storage.cursor != 0 else { break }
                 if autocompleteLength != 0 {
                     var rightCount = 0
                     while storage.cursor < storage.count {

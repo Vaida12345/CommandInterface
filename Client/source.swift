@@ -13,7 +13,8 @@ struct Command: CommandInterface, ParsableCommand {
         Terminal.setRawMode()
         
         while true {
-            let input = self.read(.options(["hello", "you"]), prompt: "read: ")
+//            let input = self.read(.options(["hello", "you"]), prompt: "read: ")
+            let input = self.read(.string.default("yes"), prompt: "read: ")
             print(">>>> \(input)")
         }
     }
