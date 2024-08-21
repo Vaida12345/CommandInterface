@@ -9,33 +9,11 @@ import Foundation
 
 
 /// Generic readable content with default value.
-public struct CommandReadableDefaultableGeneric<Content>: CommandReadable {
-    
-    let transform: (_ input: String) throws -> Content?
-    
-    let condition: (_ content: Content) throws -> Bool
-    
-    let formatter: (_ content: Content) -> String
-    
-    public let stopSequence: [Regex<Substring>]
+public final class CommandReadableDefaultableGeneric<Content>: CommandReadableGeneric<Content> {
     
     public let defaultValue: Content
     
-    
-    public func transform(input: String) throws -> Content? {
-        try transform(input)
-    }
-    
-    public func condition(content: Content) throws -> Bool {
-        try condition(content)
-    }
-    
-    public func formatter(content: Content) -> String {
-        formatter(content)
-    }
-    
-    
-    public func readUserInput() -> String? {
+    public override func readUserInput() -> String? {
         let defaultValue = formatter(defaultValue)
         var storage = StandardInputStorage()
         
@@ -106,40 +84,24 @@ public struct CommandReadableDefaultableGeneric<Content>: CommandReadable {
         return nil
     }
     
-}
-
-
-extension CommandReadableDefaultableGeneric {
+    init(
+        transform: @escaping (_: String) throws -> Content?,
+        condition: @escaping (_: Content) throws -> Bool,
+        formatter: @escaping (_: Content) -> String,
+        stopSequence: [Regex<Substring>] = [],
+        defaultValue: Content
+    ) {
+        self.defaultValue = defaultValue
+        
+        super.init(transform: transform, condition: condition, formatter: formatter, stopSequence: stopSequence)
+    }
     
-    /// Provides the stop sequence.
-    ///
-    /// Inputs with stop sequences stops immediately when matched. This would usually indicate that a newline is not inserted. For example
-    ///
-    /// ```swift
-    /// let input = self.read(.string.stopSequence(/\?/), prompt: "read: ")
-    /// print(">>>> \(input)")
-    /// // read: ?>>>?\n
-    /// ```
-    ///
-    /// - Parameters:
-    ///   - sequence: A sequence of `String`s that halts input processing and returns when the entire input matches any element in the sequence.
-    public func stopSequence(_ sequence: [Regex<Substring>]) -> CommandReadableDefaultableGeneric {
+    
+    public override func stopSequence(_ sequence: [Regex<Substring>]) -> CommandReadableDefaultableGeneric {
         CommandReadableDefaultableGeneric(transform: self.transform, condition: self.condition, formatter: self.formatter, stopSequence: sequence, defaultValue: defaultValue)
     }
     
-    /// Provides the stop sequence.
-    ///
-    /// Inputs with stop sequences stops immediately when matched. This would usually indicate that a newline is not inserted. For example
-    ///
-    /// ```swift
-    /// let input = self.read(.string.stopSequence(/\?/), prompt: "read: ")
-    /// print(">>>> \(input)")
-    /// // read: ?>>>?\n
-    /// ```
-    ///
-    /// - Parameters:
-    ///   - sequence: A sequence of `String`s that halts input processing and returns when the entire input matches any element in the sequence.
-    public func stopSequence(_ sequence: Regex<Substring>...) -> CommandReadableDefaultableGeneric {
+    public override func stopSequence(_ sequence: Regex<Substring>...) -> CommandReadableDefaultableGeneric {
         self.stopSequence(sequence)
     }
     

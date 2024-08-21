@@ -102,6 +102,10 @@ public extension CommandReadable {
     }
     
     func readUserInput() -> String? {
+        _defaultReadUserInput()
+    }
+    
+    func _defaultReadUserInput() -> String? {
         var storage = StandardInputStorage()
         
         while let next = NextChar.consumeNext() {

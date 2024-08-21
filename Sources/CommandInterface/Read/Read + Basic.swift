@@ -9,7 +9,7 @@ import Stratum
 
 
 /// Generic readable content.
-public struct CommandReadableGeneric<Content>: CommandReadable {
+public class CommandReadableGeneric<Content>: CommandReadable {
     
     let transform: (_ input: String) throws -> Content?
     
@@ -32,6 +32,10 @@ public struct CommandReadableGeneric<Content>: CommandReadable {
         formatter(content)
     }
     
+    public func readUserInput() -> String? {
+        _defaultReadUserInput()
+    }
+    
     
     public static func transform(
         transform: @escaping (_ input: String) throws -> Content?,
@@ -41,15 +45,18 @@ public struct CommandReadableGeneric<Content>: CommandReadable {
         CommandReadableGeneric(transform: transform, condition: condition, formatter: formatter, stopSequence: [])
     }
     
-}
-
-
-extension CommandReadableGeneric {
-    
-    /// Provides the default value.
-    public func `default`(_ content: Content) -> CommandReadableDefaultableGeneric<Content> {
-        CommandReadableDefaultableGeneric(transform: self.transform, condition: self.condition, formatter: self.formatter, stopSequence: self.stopSequence, defaultValue: content)
+    init(
+        transform: @escaping (_: String) throws -> Content?,
+        condition: @escaping (_: Content) throws -> Bool,
+        formatter: @escaping (_: Content) -> String,
+        stopSequence: [Regex<Substring>] = []
+    ) {
+        self.transform = transform
+        self.condition = condition
+        self.formatter = formatter
+        self.stopSequence = stopSequence
     }
+    
     
     /// Provides the stop sequence.
     ///
@@ -81,6 +88,16 @@ extension CommandReadableGeneric {
     ///   - sequence: A sequence of `String`s that halts input processing and returns when the entire input matches any element in the sequence.
     public func stopSequence(_ sequence: Regex<Substring>...) -> CommandReadableGeneric {
         self.stopSequence(sequence)
+    }
+    
+}
+
+
+extension CommandReadableGeneric {
+    
+    /// Provides the default value.
+    public func `default`(_ content: Content) -> CommandReadableDefaultableGeneric<Content> {
+        CommandReadableDefaultableGeneric(transform: self.transform, condition: self.condition, formatter: self.formatter, stopSequence: self.stopSequence, defaultValue: content)
     }
     
 }
