@@ -11,7 +11,7 @@ import Foundation
 /// A content that can be read from ``CommandInterface/CommandInterface/read(_:prompt:condition:)``.
 public protocol CommandReadable {
     
-    /// The initializer that transforms `input` to ``Content``.
+    /// The initializer that transforms `input` to `Content`.
     ///
     /// If `nil` is returned or the function throws an exception, the user is prompted to enter another input.
     func transform(input: String) throws -> Content?

@@ -121,7 +121,7 @@ extension CommandReadable {
     /// A customized readable content
     ///
     /// - Parameters:
-    ///   - transform: The initializer that transforms `input` to ``Content``.
+    ///   - transform: The initializer that transforms `input` to `Content`.
     ///   - condition: The condition that `content` needs to pass to be returned from ``CommandInterface/CommandInterface/read(_:prompt:condition:)``.
     ///   - formatter: The default value formatter. This function is used to format the default value when printed. The default implementation returns the default description.
     public static func transform(
