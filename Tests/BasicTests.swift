@@ -6,6 +6,7 @@
 //
 
 import Stratum
+@testable
 import CommandInterface
 import Testing
 
