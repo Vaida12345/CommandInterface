@@ -21,26 +21,15 @@ public protocol CommandReadable {
     /// The default implementation returns `true`.
     func condition(content: Content) throws -> Bool
     
-    /// A sequence of `String`s that halts input processing and returns when the entire input matches any element in the sequence.
-    ///
-    /// The default implementation returns `[]`.
-    var stopSequence: [Regex<Substring>] { get }
-    
     /// The value formatter.
     ///
     /// This function is used to format the default value when printed. The default implementation returns the default description.
     func formatter(content: Content) -> String
     
-    
-    /// The core. The function recursively called to prompt user for input.
-    ///
-    /// Useless you want to customize the get loop, use the default implementation.
-    func getLoop(_ manager: _CommandReadableManager<Content>) -> Content
-    
     /// The core. The function reads from the user.
     ///
     /// Useless you want to customize the get loop, use the default implementation.
-    func readUserInput() -> String?
+    func readUserInput(configuration: _ReadUserInputConfiguration) -> String?
     
     
     associatedtype Content
@@ -58,20 +47,55 @@ public extension CommandReadable {
         true
     }
     
-    var stopSequence: [Regex<Substring>] {
-        []
-    }
-    
     
     private func getLoopRecursion(manager: _CommandReadableManager<Content>) -> Content {
         Terminal.bell()
         return getLoop(manager)
     }
     
+    func readUserInput(configuration: _ReadUserInputConfiguration) -> String? {
+        _defaultReadUserInput(configuration: configuration)
+    }
+    
+    func _defaultReadUserInput(configuration: _ReadUserInputConfiguration) -> String? {
+        var storage = StandardInputStorage()
+        
+        while let next = NextChar.consumeNext() {
+            switch next {
+            case .newline:
+                Swift.print("\n", terminator: "")
+                fflush(stdout)
+                return storage.get()
+                
+            case .tab:
+                // do nothing
+                break
+                
+            default:
+                storage.handle(next)
+            }
+            
+            let string = storage.get()
+            if configuration.stopSequence.contains(where: { (try? $0.wholeMatch(in: string)) != nil }) {
+                return string
+            }
+        }
+        
+        return nil
+    }
+    
+}
+
+
+extension CommandReadable {
+    
+    /// The core. The function recursively called to prompt user for input.
+    ///
+    /// Useless you want to customize the get loop, use the default implementation.
     func getLoop(_ manager: _CommandReadableManager<Content>) -> Content {
         DefaultInterface.default.print(manager.prompt, terminator: "")
         
-        guard let input = self.readUserInput() else {
+        guard let input = self.readUserInput(configuration: .default) else {
             return getLoopRecursion(manager: manager)
         }
         
@@ -101,39 +125,7 @@ public extension CommandReadable {
         }
     }
     
-    func readUserInput() -> String? {
-        _defaultReadUserInput()
-    }
-    
-    func _defaultReadUserInput() -> String? {
-        var storage = StandardInputStorage()
-        
-        while let next = NextChar.consumeNext() {
-            switch next {
-            case .newline:
-                Swift.print("\n", terminator: "")
-                fflush(stdout)
-                return storage.get()
-                
-            case .tab:
-                // do nothing
-                break
-                
-            default:
-                storage.handle(next)
-            }
-            
-            let string = storage.get()
-            if self.stopSequence.contains(where: { (try? $0.wholeMatch(in: string)) != nil }) {
-                return string
-            }
-        }
-        
-        return nil
-    }
-    
 }
-
 
 
 public struct _CommandReadableManager<Content> {
@@ -141,5 +133,14 @@ public struct _CommandReadableManager<Content> {
     internal let prompt: CommandPrintManager.Interpolation
     
     internal let condition: ((_ content: Content) throws -> Bool)?
+    
+}
+
+
+public struct _ReadUserInputConfiguration {
+    
+    internal let stopSequence: [Regex<Substring>]
+    
+    static let `default` = _ReadUserInputConfiguration(stopSequence: [])
     
 }

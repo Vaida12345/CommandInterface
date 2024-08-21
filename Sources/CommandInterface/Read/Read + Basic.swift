@@ -9,15 +9,13 @@ import Stratum
 
 
 /// Generic readable content.
-public class CommandReadableGeneric<Content>: CommandReadable {
+public class CommandReadableGeneric<Content>: CommandReadableDefaultable {
     
     let transform: (_ input: String) throws -> Content?
     
     let condition: (_ content: Content) throws -> Bool
     
     let formatter: (_ content: Content) -> String
-    
-    public let stopSequence: [Regex<Substring>]
     
     
     public func transform(input: String) throws -> Content? {
@@ -32,8 +30,8 @@ public class CommandReadableGeneric<Content>: CommandReadable {
         formatter(content)
     }
     
-    public func readUserInput() -> String? {
-        _defaultReadUserInput()
+    public func readUserInput(configuration: _ReadUserInputConfiguration) -> String? {
+        _defaultReadUserInput(configuration: configuration)
     }
     
     
@@ -42,62 +40,23 @@ public class CommandReadableGeneric<Content>: CommandReadable {
         condition: @escaping (_ content: Content) throws -> Bool = { _ in true },
         formatter: @escaping (_ content: Content) -> String = { "\($0)" }
     ) -> CommandReadableGeneric {
-        CommandReadableGeneric(transform: transform, condition: condition, formatter: formatter, stopSequence: [])
+        CommandReadableGeneric(transform: transform, condition: condition, formatter: formatter)
     }
     
     init(
         transform: @escaping (_: String) throws -> Content?,
         condition: @escaping (_: Content) throws -> Bool,
-        formatter: @escaping (_: Content) -> String,
-        stopSequence: [Regex<Substring>] = []
+        formatter: @escaping (_: Content) -> String
     ) {
         self.transform = transform
         self.condition = condition
         self.formatter = formatter
-        self.stopSequence = stopSequence
     }
     
-    
-    /// Provides the stop sequence.
-    ///
-    /// Inputs with stop sequences stops immediately when matched. This would usually indicate that a newline is not inserted. For example
-    ///
-    /// ```swift
-    /// let input = self.read(.string.stopSequence(/\?/), prompt: "read: ")
-    /// print(">>>> \(input)")
-    /// // read: ?>>>?\n
-    /// ```
-    ///
-    /// - Parameters:
-    ///   - sequence: A sequence of `String`s that halts input processing and returns when the entire input matches any element in the sequence.
-    public func stopSequence(_ sequence: [Regex<Substring>]) -> CommandReadableGeneric {
-        CommandReadableGeneric(transform: self.transform, condition: self.condition, formatter: self.formatter, stopSequence: sequence)
-    }
-    
-    /// Provides the stop sequence.
-    ///
-    /// Inputs with stop sequences stops immediately when matched. This would usually indicate that a newline is not inserted. For example
-    ///
-    /// ```swift
-    /// let input = self.read(.string.stopSequence(/\?/), prompt: "read: ")
-    /// print(">>>> \(input)")
-    /// // read: ?>>>?\n
-    /// ```
-    ///
-    /// - Parameters:
-    ///   - sequence: A sequence of `String`s that halts input processing and returns when the entire input matches any element in the sequence.
-    public func stopSequence(_ sequence: Regex<Substring>...) -> CommandReadableGeneric {
-        self.stopSequence(sequence)
-    }
-    
-}
-
-
-extension CommandReadableGeneric {
     
     /// Provides the default value.
-    public func `default`(_ content: Content) -> CommandReadableDefaultableGeneric<Content> {
-        CommandReadableDefaultableGeneric(transform: self.transform, condition: self.condition, formatter: self.formatter, stopSequence: self.stopSequence, defaultValue: content)
+    public func `default`(_ defaultValue: Content) -> CommandReadableDefaultableGeneric<Content> {
+        CommandReadableDefaultableGeneric(transform: self.transform, condition: self.condition, formatter: self.formatter, defaultValue: defaultValue)
     }
     
 }
@@ -170,7 +129,7 @@ extension CommandReadable {
         condition: @escaping (_ content: Content) throws -> Bool = { _ in true },
         formatter: @escaping (_ content: Content) -> String = { "\($0)" }
     ) -> CommandReadableGeneric<Content> {
-        CommandReadableGeneric(transform: transform, condition: condition, formatter: formatter, stopSequence: [])
+        CommandReadableGeneric(transform: transform, condition: condition, formatter: formatter)
     }
     
 }
