@@ -28,7 +28,7 @@ struct InputTests {
         }
         
         let string = try String(data: handle.readToEnd()!, encoding: .utf8)
-        let match = "String here: hello!\n>>>hello!"
+        let match = "String here: hello!\n\(Terminal.escape)[0J>>>hello!"
         #expect(string == match)
     }
     
@@ -50,7 +50,7 @@ struct InputTests {
         }
         
         let string = try String(data: handle.readToEnd()!, encoding: .utf8)
-        let match = "read: ^[[2mabcd^[[0m^[[1D^[[1D^[[1D^[[1D^[[0K?".replacingOccurrences(of: "^[", with: "\(Terminal.escape)") + ">>>?"
+        let match = "read: ^[[2mabcd^[[0m^[[1D^[[1D^[[1D^[[1D^[[0K?\(Terminal.escape)[0J".replacingOccurrences(of: "^[", with: "\(Terminal.escape)") + ">>>?"
         #expect(string == match)
     }
     
@@ -62,7 +62,7 @@ struct InputTests {
         }
         
         let string = try String(data: handle.readToEnd()!, encoding: .utf8)
-        let match = "^[[2myes^[[0m^[[1D^[[1D^[[1D".replacingOccurrences(of: "^[", with: "\(Terminal.escape)") + "\n>>>true"
+        let match = "^[[2myes^[[0m^[[1D^[[1D^[[1D".replacingOccurrences(of: "^[", with: "\(Terminal.escape)") + "\n\(Terminal.escape)[0J>>>true"
         #expect(string == match)
     }
     
@@ -70,76 +70,104 @@ struct InputTests {
     @MainActor
     struct DefaultValue {
         
-        @Test func emptyInput() async throws {
+        func test(
+            input: String,
+            match: String,
+            return returnValue: String = "abc",
+            terminator: String = "\n",
+            expect: (String, String?) -> Void
+        ) throws {
             let handle = try withStandardOutputCaptured {
-                simulateUserInput("\n")
-                let string = Terminal.defaultInterface.read(.string.default("abcd"), prompt: "read: ")
+                simulateUserInput(input + terminator)
+                let string = Terminal.defaultInterface.read(.string.default("abc"), prompt: "")
                 Terminal.defaultInterface.print(">>>\(string)", terminator: "")
             }
             
             let string = try String(data: handle.readToEnd()!, encoding: .utf8)
-            let match = "read: \(Terminal.escape)[2mabcd\(Terminal.escape)[0m\(Terminal.escape)[1D\(Terminal.escape)[1D\(Terminal.escape)[1D\(Terminal.escape)[1D\n>>>abcd"
-            #expect(string == match)
+            let _match = match
+                .replacingOccurrences(of: "^[", with: "\(Terminal.escape)")
+                .replacingOccurrences(of: "\r", with: "\\r")
+            let match = "\(_match)\(terminator)\(Terminal.escape)[0J>>>\(returnValue)"
+            expect(match, string)
+        }
+        
+        @Test func emptyInput() async throws {
+            try test(
+                input: "",
+                match: "^[[2mabc^[[0m^[[1D^[[1D^[[1D",
+                expect: { #expect($0 == $1) }
+            )
         }
         
         @Test func matchingInput() async throws {
-            let handle = try withStandardOutputCaptured {
-                simulateUserInput("a\n")
-                let string = Terminal.defaultInterface.read(.string.default("abcd"), prompt: "read: ")
-                Terminal.defaultInterface.print(">>>\(string)", terminator: "")
-            }
-            
-            let string = try String(data: handle.readToEnd()!, encoding: .utf8)
-            let match = "read: \(Terminal.escape)[2mabcd\(Terminal.escape)[0m\(Terminal.escape)[1D\(Terminal.escape)[1D\(Terminal.escape)[1D\(Terminal.escape)[1Da\n>>>abcd"
-            #expect(string == match)
+            try test(
+                input: "a",
+                match: "^[[2mabc^[[0m^[[1D^[[1D^[[1Da",
+                expect: { #expect($0 == $1) }
+            )
         }
         
         @Test func unmatchingInput() async throws {
-            let handle = try withStandardOutputCaptured {
-                simulateUserInput("f\n")
-                let string = Terminal.defaultInterface.read(.string.default("abcd"), prompt: "read: ")
-                Terminal.defaultInterface.print(">>>\(string)", terminator: "")
-            }
-            
-            let string = try String(data: handle.readToEnd()!, encoding: .utf8)
-            let match = "read: ^[[2mabcd^[[0m^[[1D^[[1D^[[1D^[[1D^[[0Kf".replacingOccurrences(of: "^[", with: "\(Terminal.escape)") + "\n>>>f"
-            #expect(string == match)
+            try test(
+                input: "f",
+                match: "^[[2mabc^[[0m^[[1D^[[1D^[[1D^[[0Kf",
+                return: "f",
+                expect: { #expect($0 == $1) }
+            )
         }
         
         @Test func emptyInputTab() async throws {
-            let handle = try withStandardOutputCaptured {
-                simulateUserInput("\t\n")
-                let string = Terminal.defaultInterface.read(.string.default("abcd"), prompt: "read: ")
-                Terminal.defaultInterface.print(">>>\(string)", terminator: "")
-            }
-            
-            let string = try String(data: handle.readToEnd()!, encoding: .utf8)
-            let match = "read: ^[[2mabcd^[[0m^[[1D^[[1D^[[1D^[[1Dabcd".replacingOccurrences(of: "^[", with: "\(Terminal.escape)") + "\n>>>abcd"
-            #expect(string == match)
+            try test(
+                input: "\t",
+                match: "^[[2mabc^[[0m^[[1D^[[1D^[[1Dabc",
+                expect: { #expect($0 == $1) }
+            )
         }
         
         @Test func matchingInputTab() async throws {
-            let handle = try withStandardOutputCaptured {
-                simulateUserInput("a\t\n")
-                let string = Terminal.defaultInterface.read(.string.default("abcd"), prompt: "read: ")
-                Terminal.defaultInterface.print(">>>\(string)", terminator: "")
-            }
-            
-            let string = try String(data: handle.readToEnd()!, encoding: .utf8)
-            let match = "read: ^[[2mabcd^[[0m^[[1D^[[1D^[[1D^[[1Dabcd".replacingOccurrences(of: "^[", with: "\(Terminal.escape)") + "\n>>>abcd"
-            #expect(string == match)
+            try test(
+                input: "a\t",
+                match: "^[[2mabc^[[0m^[[1D^[[1D^[[1Dabc",
+                expect: { #expect($0 == $1) }
+            )
         }
         
         @Test func unmatchingInputTab() async throws {
-            let handle = try withStandardOutputCaptured {
-                simulateUserInput("f\t\n")
-                let string = Terminal.defaultInterface.read(.string.default("abcd"), prompt: "read: ")
-                Terminal.defaultInterface.print(">>>\(string)", terminator: "")
-            }
-            
-            let string = try String(data: handle.readToEnd()!, encoding: .utf8)
-            let match = "read: ^[[2mabcd^[[0m^[[1D^[[1D^[[1D^[[1D^[[0Kf".replacingOccurrences(of: "^[", with: "\(Terminal.escape)") + "\n>>>f"
-            #expect(string == match)
+            try test(
+                input: "f\t",
+                match: "^[[2mabc^[[0m^[[1D^[[1D^[[1D^[[0Kf",
+                return: "f",
+                expect: { #expect($0 == $1) }
+            )
+        }
+        
+        @Test func deleteBeforeCursor() throws {
+            try test(
+                input: "\u{7F}\t",
+                match: "^[[2mabc^[[0m^[[1D^[[1D^[[1Dabc",
+                expect: { #expect($0 == $1) }
+            )
+        }
+        
+        @Test func moveRight() throws {
+            try test(
+                input: "\(Character.right)",
+                match: "^[[2mabc^[[0m^[[1D^[[1D^[[1Dabc^[[1D^[[1D",
+                expect: { #expect($0 == $1) }
+            )
+        }
+        
+        @Test func fillThenDeleteBeforeCursor() throws {
+            try test(
+                input: "ab\(Character.left)\u{7F}\t",
+                match: "^[[2mabc^[[0m^[[1D^[[1D^[[1Dab^[[1D^[[1C^[[1C^[[1D^[[P^[[1D^[[1D^[[P",
+                return: "b",
+                expect: { #expect($0 == $1) }
+            )
+        }
+        
+        init() {
+            Terminal.setRawMode()
         }
         
     }
@@ -162,3 +190,31 @@ func simulateUserInput(_ input: String) {
     freopen("/dev/null", "r", stdin) // Close the current stdin
     dup2(pipe.fileHandleForReading.fileDescriptor, STDIN_FILENO)
 }
+
+extension Character {
+    static var up: Character {
+        let sequence: [UInt8] = [239, 156, 128]
+        return String(data: Data(sequence), encoding: .utf8)!.first!
+    }
+    
+    static var down: Character {
+        let sequence: [UInt8] = [239, 156, 129]
+        return String(data: Data(sequence), encoding: .utf8)!.first!
+    }
+    
+    static var left: Character {
+        let sequence: [UInt8] = [239, 156, 130]
+        return String(data: Data(sequence), encoding: .utf8)!.first!
+    }
+    
+    static var right: Character {
+        let sequence: [UInt8] = [239, 156, 131]
+        return String(data: Data(sequence), encoding: .utf8)!.first!
+    }
+}
+
+
+//if sequence.starts(with: [239, 156]), sequence.count == 3 { // Xcode input
+//    switch sequence[2] {
+//    case 128:
+//        return .up

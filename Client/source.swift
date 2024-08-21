@@ -14,8 +14,12 @@ struct Command: CommandInterface, ParsableCommand {
         
         while true {
 //            let input = self.read(.options(["hello", "you"]), prompt: "read: ")
-            let input = self.read(.string.default("yes"), prompt: "read: ")
-            print(">>>> \(input)")
+//            let input = self.read(.bool.default(true), prompt: "read: ")
+//            print(">>>> \(input)")
+            
+//            let string = Terminal.defaultInterface.read(.string.default("abc"), prompt: "")
+            
+            
         }
     }
     

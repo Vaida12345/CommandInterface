@@ -22,7 +22,7 @@ public enum NextChar: Equatable {
     case badSymbol
     case empty
     
-    /// Consume and returns next char.
+    /// Consume the stdin and returns next char.
     ///
     /// You need to ensure the Terminal is in raw mode by ``Terminal/setRawMode()``
     ///
@@ -74,7 +74,26 @@ public enum NextChar: Equatable {
                     
                     while true {
                         switch utf.decode(&iterator) {
-                        case .scalarValue(let v): return .char(Character(v))
+                        case .scalarValue(let v):
+                            // handle special cases
+                            let sequence = v.utf8
+                            if sequence.starts(with: [239, 156]), sequence.count == 3 { // Xcode input
+                                switch sequence[2] {
+                                case 128:
+                                    return .up
+                                case 129:
+                                    return .down
+                                case 130:
+                                    return .left
+                                case 131:
+                                    return .right
+                                default:
+                                    break
+                                }
+                            }
+                            
+                            let char = Character(v)
+                            return .char(char)
                         case .emptyInput: return .empty
                         case .error: return .badSymbol
                         }

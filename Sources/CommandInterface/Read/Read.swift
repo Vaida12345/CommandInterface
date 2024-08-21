@@ -71,8 +71,6 @@ public extension CommandReadable {
     func getLoop(_ manager: _CommandReadableManager<Content>) -> Content {
         DefaultInterface.default.print(manager.prompt, terminator: "")
         
-        let line = Terminal.cursor.currentPosition().line
-        
         guard let input = self.readUserInput() else {
             return getLoopRecursion(manager: manager)
         }
@@ -88,13 +86,15 @@ public extension CommandReadable {
             
             return content
         } catch {
+            let errorDescription: String
             if let error = error as? ReadError {
-                DefaultInterface.default.print("\(error.reason, modifier: .foregroundColor(.red))")
+                errorDescription = error.reason
             } else {
-                DefaultInterface.default.print("\((error as NSError).localizedDescription, modifier: .foregroundColor(.red))")
+                errorDescription = (error as NSError).localizedDescription
             }
+            DefaultInterface.default.print("\(errorDescription, modifier: .foregroundColor(.red))")
             
-            Terminal.cursor.moveTo(line: line, column: 0)
+            Terminal.cursor.moveUp(line: errorDescription.count(where: { $0.isNewline }) + 2)
             Terminal.clearLine()
             
             return getLoopRecursion(manager: manager)

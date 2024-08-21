@@ -75,6 +75,10 @@ extension CommandPrintManager {
             self.words = [Word(content: value, modifier: .default)]
         }
         
+        private init(words: [Word]) {
+            self.words = words
+        }
+        
         private mutating func _append(string: String, modifier: Modifier) {
             self.words.append(Word(content: string, modifier: modifier))
         }
