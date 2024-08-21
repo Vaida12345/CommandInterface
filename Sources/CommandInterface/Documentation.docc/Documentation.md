@@ -18,10 +18,10 @@ This package implemented many low-level terminal operations, and even a terminal
 The following code would reflect whatever the user input, except when the user presses the up key, in which case it would print *Move keyboard up!*, and not taking *any other* action to the up key.
 
 ```swift
-var __raw = __setRawMode(); defer { __resetTerminal(originalTerm: &__raw) }
+Terminal.setRawMode()
 
 var storage = StandardInputStorage()
-while let next = __consumeNext() {
+while let next = NextChar.consumeNext() {
     switch next {
     case .up:
         print("Move keyboard up!")
@@ -35,5 +35,33 @@ while let next = __consumeNext() {
 The first line is always required as the wrapper, which sets the terminal into raw mode.
 
 ```
-var __raw = __setRawMode(); defer { __resetTerminal(originalTerm: &__raw) }
+Terminal.setRawMode()
 ```
+
+
+## Topics
+
+### Entrance
+
+- ``CommandInterface``
+
+### Read User Input
+
+- ``CommandInterface/CommandInterface/read(_:prompt:condition:)``
+- ``CommandInterface/CommandReadable``
+- <doc:CommandReadableContent>
+
+### Print Content
+
+- ``CommandInterface/CommandInterface/print(_:terminator:)``
+- ``CommandInterface/CommandPrintManager``
+
+### Controls
+
+- ``CommandInterface/Terminal``
+- ``CommandInterface/Cursor``
+
+### Interaction with Terminal
+
+- ``CommandInterface/StandardInputStorage``
+- ``CommandInterface/NextChar``

@@ -15,17 +15,28 @@ import OSLog
 ///
 /// To use `read`, always set
 /// ```swift
-/// var __raw = __setRawMode(); defer { __resetTerminal(originalTerm: &__raw) }
+/// Terminal.setRawMode()
 /// ```
+///
+/// To declare the main entrance, please declare the command as `ParsableCommand` or `AsyncParsableCommand`.
+///
+/// ## Topics
+///
+/// ### IO
+/// - ``read(_:prompt:condition:)``
+/// - ``print(_:terminator:)``
+///
+/// ### Controls
+/// - ``terminal``
 public protocol CommandInterface {
     
     
 }
 
 
-public struct DefaultInterface: CommandInterface {
+struct DefaultInterface: CommandInterface {
     
-    public static var `default`: DefaultInterface {
+    static var `default`: DefaultInterface {
         DefaultInterface()
     }
     

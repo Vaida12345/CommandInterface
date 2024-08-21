@@ -131,7 +131,7 @@ public struct Terminal {
         self.originalTerminal = nil
     }
     
-    public static var defaultInterface: DefaultInterface {
+    static var defaultInterface: DefaultInterface {
         .default
     }
     
