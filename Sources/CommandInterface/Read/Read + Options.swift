@@ -12,12 +12,17 @@ public struct CommandReadableOptions: CommandReadable {
     
     let options: [String]
     
+    let bounded: Bool
+    
+    public var stopSequence: [Regex<Substring>]
+    
+    
     public func transform(input: String) throws -> Content? {
         input
     }
     
     public func condition(content: String) throws -> Bool {
-        options.contains(content)
+        !bounded || options.contains(content)
     }
     
     public func readUserInput() -> String? {
@@ -99,6 +104,11 @@ public struct CommandReadableOptions: CommandReadable {
             
             fflush(stdout);
             lastInput = key
+            
+            let string = storage.get()
+            if self.stopSequence.contains(where: { (try? $0.wholeMatch(in: string)) != nil }) {
+                return string
+            }
         }
         
         return nil
@@ -109,14 +119,47 @@ public struct CommandReadableOptions: CommandReadable {
     
 }
 
+extension CommandReadableOptions {
+    
+    /// Provides the stop sequence.
+    ///
+    /// Inputs with stop sequences stops immediately when matched. This would usually indicate that a newline is not inserted. For example
+    ///
+    /// ```swift
+    /// let input = self.read(.string.stopSequence(/\?/), prompt: "read: ")
+    /// print(">>>> \(input)")
+    /// // read: ?>>>?\n
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - sequence: A sequence of `String`s that halts input processing and returns when the entire input matches any element in the sequence.
+    public func stopSequence(_ sequence: [Regex<Substring>]) -> CommandReadableOptions {
+        CommandReadableOptions(options: self.options, bounded: self.bounded, stopSequence: sequence)
+    }
+    
+}
+
 extension CommandReadable where Self == CommandReadableOptions {
     
+    /// Have the user enter a string from the given options.
     public static func options(
         _ options: [String]
     ) -> CommandReadableOptions {
-        CommandReadableOptions(options: options)
+        CommandReadableOptions(options: options, bounded: true, stopSequence: [])
     }
     
-    // where Option: RawRepresentable & CaseIterable, Option.RawValue == String, Self == CommandReadableOptions<Option>
+    /// Have the user enter a string from the given options.
+    public static func options(
+        _ options: String...
+    ) -> CommandReadableOptions {
+        Self.options(options)
+    }
+    
+    /// Ask the user for a string.
+    public static func unboundedOptions(
+        _ options: [String]
+    ) -> CommandReadableOptions {
+        CommandReadableOptions(options: options, bounded: false, stopSequence: [])
+    }
     
 }

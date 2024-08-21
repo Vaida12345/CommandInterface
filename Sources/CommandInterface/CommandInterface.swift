@@ -92,17 +92,9 @@ public extension CommandInterface {
     /// ```
     ///
     /// - Parameters:
-    ///   - contentType: The content type for reading. See ``CommandReadableContent``.
+    ///   - contentType: The content type for reading. See ``CommandReadable``.
     ///   - prompt: The prompt shown to the user.
     ///   - condition: The condition that will be matched against.
-//    func read<Content>(
-//        _ contentType: CommandReadableContent<Content>,
-//        prompt: CommandPrintManager.Interpolation,
-//        condition: ((_ content: Content) throws -> Bool)? = nil
-//    ) -> Content {
-//        CommandReadManager(prompt: prompt, contentType: contentType, condition: contentType.condition ?? condition).get()
-//    }
-    
     func read<T>(
         _ contentType: T,
         prompt: CommandPrintManager.Interpolation,
