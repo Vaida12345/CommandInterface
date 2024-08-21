@@ -50,11 +50,8 @@ public struct CommandReadableOptions: CommandReadable {
         while let key = NextChar.consumeNext() {
             switch key {
             case .up: // Up arrow, rotate
-                if !showInitial {
-                    showInitial = true
-                } else {
-                    rotateUp()
-                }
+                rotateUp()
+                showInitial = true
                 
                 storage.clearEntered()
                 storage.insertAtCursor(options[rotate])
@@ -67,15 +64,7 @@ public struct CommandReadableOptions: CommandReadable {
                 
                 storage.clearEntered()
                 storage.insertAtCursor(options[rotate])
-            case .right: // Right arrow, do nothing
-                storage.move(to: .right)
-            case .left: // Left arrow, do nothing
-                storage.move(to: .left)
             case .tab: // Tab key
-                       //            print("    ", terminator: "")
-                       //
-                       //            buffer.append(contentsOf: "    ")
-                       //            cursor += 4
                 if lastInput != .tab {
                     __buffer = storage.get()
                 } else {
@@ -105,7 +94,7 @@ public struct CommandReadableOptions: CommandReadable {
                     storage.insertAtCursor(value)
                 }
             default:
-                continue
+                storage.handle(key)
             }
             
             fflush(stdout);

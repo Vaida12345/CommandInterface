@@ -15,6 +15,8 @@ public struct StandardInputStorage {
     private var buffer: [Character]
     
     /// The cursor records the position using number of `Character`s, not count of utf8.
+    ///
+    /// A cursor position of `zero` indicates before the position before the first character.
     public private(set) var cursor: Int
     
     
@@ -45,12 +47,17 @@ public struct StandardInputStorage {
         if length == 0 {
             return
         } else if length < 0 {
-            for _ in 1...abs(length) {
-                move(to: direction.opposite())
-            }
+            self.move(to: direction.opposite(), length: abs(length))
         } else {
-            for _ in 1...length {
-                move(to: direction)
+            switch direction {
+            case .left:
+                let length = min(length, self.cursor)
+                Terminal.cursor.move(toLeft: length)
+                self.cursor -= length
+            case .right:
+                let length = min(length, self.buffer.count - self.cursor)
+                Terminal.cursor.move(toRight: length)
+                self.cursor += length
             }
         }
     }
@@ -77,15 +84,45 @@ public struct StandardInputStorage {
     }
     
     /// Delete the value immediately before the cursor, which is the normal use of delete.
-    public mutating func deleteBeforeCursor() {
-        if cursor > 0 && cursor <= buffer.count, let dis = move(to: .left) {
-            for _ in 1...dis {
-                print("\(Terminal.escape)[P", terminator: "")
+    public mutating func deleteBeforeCursor(count: Int = 1) {
+        guard count != 0 else { return }
+        
+        var num = 0
+        var shift = 0
+        for _ in 1...count {
+            if cursor > 0 {
+                let dis = min(buffer[cursor - 1].utf8.count, 2)
+                num += dis
+                cursor -= 1
+                shift += 1
             }
-            fflush(stdout);
-            
-            buffer.remove(at: cursor)
         }
+        
+        print("\(Terminal.escape)[\(num)D", terminator: "") // move to left
+        print("\(Terminal.escape)[\(num)P", terminator: "") // clear
+        fflush(stdout);
+        
+        buffer.replaceSubrange(self.cursor ..< self.cursor + shift, with: "")
+    }
+    
+    /// Delete the value immediately after the cursor.
+    public mutating func deleteAfterCursor(count: Int = 1) {
+        guard count != 0 else { return }
+        
+        var num = 0
+        var shift = 0
+        for _ in 1...count {
+            if cursor < self.buffer.count {
+                let dis = min(buffer[cursor - 1 + shift].utf8.count, 2)
+                num += dis
+                shift += 1
+            }
+        }
+        
+        print("\(Terminal.escape)[\(num)P", terminator: "") // clear
+        fflush(stdout);
+        
+        buffer.replaceSubrange(self.cursor ..< self.cursor + shift, with: "")
     }
     
     public mutating func insertAtCursor(_ value: Character) {
@@ -160,10 +197,12 @@ public struct StandardInputStorage {
         self.buffer.removeLast(count)
     }
     
-    public mutating func seekToEnd() {
-        while self.cursor < self.buffer.count {
-            move(to: .right)
-        }
+    /// Seek to end, and returns the shift
+    @discardableResult
+    public mutating func seekToEnd() -> Int {
+        let shift = self.buffer.count - self.cursor
+        move(to: .right, length: shift)
+        return shift
     }
     
     
@@ -196,12 +235,8 @@ public struct StandardInputStorage {
     public mutating func clearEntered() -> String {
         defer {
             // rotate to end
-            while cursor < self.buffer.count {
-                self.move(to: .right)
-            }
-            while cursor > 0 {
-                self.deleteBeforeCursor()
-            }
+            self.move(to: .right, length: self.buffer.count - cursor)
+            self.deleteBeforeCursor(count: self.buffer.count)
         }
         return String(buffer)
     }

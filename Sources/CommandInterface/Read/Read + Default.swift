@@ -76,17 +76,11 @@ public struct CommandReadableDefaultableGeneric<Content>: CommandReadable {
             case .delete:
                 guard storage.cursor != 0 else { break }
                 if autocompleteLength != 0 {
-                    var rightCount = 0
-                    while storage.cursor < storage.count {
-                        storage.move(to: .right)
-                        rightCount += 1
-                    }
-                    for _ in 1...autocompleteLength {
-                        storage.deleteBeforeCursor()
-                        rightCount -= 1
-                    }
+                    let shift = storage.count - storage.cursor - autocompleteLength
+                    storage.move(to: .right, length: shift)
+                    storage.deleteAfterCursor(count: autocompleteLength)
+                    storage.move(to: .left, length: shift)
                     autocompleteLength = 0
-                    storage.move(to: .left, length: rightCount)
                 }
                 storage.handle(next)
                 
