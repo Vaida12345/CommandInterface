@@ -159,9 +159,16 @@ extension CommandReadable {
     
     /// Have the user enter a string from the given options.
     public static func options<Content>(
-        _ options: [Content]
+        _ options: some Sequence<Content>
     ) -> CommandReadableOptionsRawRepresentable<Content> where Content: RawRepresentable, Content.RawValue == String, Self == CommandReadableOptionsRawRepresentable<Content> {
         CommandReadableOptionsRawRepresentable<Content>(optionsReader: CommandReadableOptions(options: options.map(\.rawValue), bounded: true))
+    }
+    
+    /// Have the user enter a string from the given options.
+    public static func options<Content>(
+        _ optionsType: Content.Type
+    ) -> CommandReadableOptionsRawRepresentable<Content> where Content: RawRepresentable, Content.RawValue == String, Self == CommandReadableOptionsRawRepresentable<Content>, Content: CaseIterable {
+        self.options(optionsType.allCases)
     }
     
 }

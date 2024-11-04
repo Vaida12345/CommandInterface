@@ -146,4 +146,69 @@ public struct Terminal {
         }
     }
     
+    /// Prints the target value.
+    ///
+    /// Using interpolation, you could control the style for each entry.
+    ///
+    /// In this example, it would print \"*Hello* **!**\".
+    /// ```swift
+    /// print("\("Hello", modifier: .italic) \("!", modifier: .bold)")
+    /// ```
+    ///
+    /// With the support for `AttributedString`, you could add them directly to interpolation.
+    /// ```swift
+    /// var string = AttributedString("12345")
+    /// string.foregroundColor = .blue
+    /// string.inlinePresentationIntent = .stronglyEmphasized
+    ///
+    /// print("The sum is \(string).")
+    /// ```
+    @inlinable
+    public static func print(_ item: CommandPrintManager.Interpolation, terminator: String = "\n") {
+        let contents = item.description
+        Swift.print(contents, terminator: terminator)
+        fflush(stdout)
+    }
+    
+    /// Reads a value from stdin.
+    ///
+    /// Use this the way you use `SwiftUI` views and modifiers. for example,
+    ///
+    /// ```swift
+    /// let value = read(.double, prompt: "Enter a value",
+    ///                  default: 3.14) { $0 > 0 }
+    /// ```
+    ///
+    /// ## Condition Modifier
+    /// Sets the condition that must meet for the read content considered succeed.
+    ///
+    /// In this example, the given text file must contain "Hello".
+    /// ```swift
+    /// self.read(.textFile, prompt: "Enter a path for text file") { content in
+    ///     content.contains("Hello")
+    /// }
+    /// ```
+    ///
+    /// You can also provide the reason for failure using `throw`.
+    /// ```swift
+    /// self.read(.textFile, prompt: "Enter a path for text file") { content in
+    ///     guard content.contains("Hello") else {
+    ///         throw ReadError(reason: "Source not contain \"Hello\"")
+    ///     }
+    ///     return true
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - contentType: The content type for reading. See ``CommandReadable``.
+    ///   - prompt: The prompt shown to the user.
+    ///   - condition: The condition that will be matched against.
+    public static func read<T>(
+        _ contentType: T,
+        prompt: CommandPrintManager.Interpolation,
+        condition: ((_ content: T.Content) throws -> Bool)? = nil
+    ) -> T.Content where T: CommandReadable {
+        contentType.getLoop(_CommandReadableManager(prompt: prompt, condition: condition))
+    }
+    
 }

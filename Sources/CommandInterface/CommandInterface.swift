@@ -68,9 +68,7 @@ public extension CommandInterface {
     /// print("The sum is \(string).")
     /// ```
     func print(_ item: CommandPrintManager.Interpolation, terminator: String = "\n") {
-        let contents = item.description
-        Swift.print(contents, terminator: terminator)
-        fflush(stdout)
+        Terminal.print(item, terminator: terminator)
     }
     
     /// Reads a value from stdin.
@@ -111,7 +109,7 @@ public extension CommandInterface {
         prompt: CommandPrintManager.Interpolation,
         condition: ((_ content: T.Content) throws -> Bool)? = nil
     ) -> T.Content where T: CommandReadable {
-        contentType.getLoop(_CommandReadableManager(prompt: prompt, condition: condition))
+        Terminal.read(contentType, prompt: prompt, condition: condition)
     }
     
     
