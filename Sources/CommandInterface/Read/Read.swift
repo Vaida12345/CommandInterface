@@ -93,7 +93,9 @@ extension CommandReadable {
     ///
     /// Useless you want to customize the get loop, use the default implementation.
     func getLoop(_ manager: _CommandReadableManager<Content>) -> Content {
+        let currentPosition = Terminal.cursor.currentPosition().line
         DefaultInterface.default.print(manager.prompt, terminator: "")
+        let linesCount = Terminal.cursor.currentPosition().line - currentPosition
         
         guard let input = self.readUserInput(configuration: .default) else {
             return getLoopRecursion(manager: manager)
@@ -120,6 +122,13 @@ extension CommandReadable {
             
             Terminal.cursor.moveUp(line: errorDescription.count(where: { $0.isNewline }) + 2)
             Terminal.clearLine()
+            
+            if linesCount != 0 {
+                for _ in 0..<linesCount {
+                    Terminal.cursor.moveUp(line: 1)
+                    Terminal.clearLine()
+                }
+            }
             
             return getLoopRecursion(manager: manager)
         }
