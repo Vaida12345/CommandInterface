@@ -29,6 +29,8 @@ public protocol CommandReadable {
     /// The core. The function reads from the user.
     ///
     /// Useless you want to customize the get loop, use the default implementation.
+    ///
+    // FIXME: How about delegation & inheritance? Have a single structure handling the reading, with states being stored properties.
     func readUserInput(configuration: _ReadUserInputConfiguration) -> String?
     
     
@@ -48,9 +50,9 @@ public extension CommandReadable {
     }
     
     
-    private func getLoopRecursion(manager: _CommandReadableManager<Content>) -> Content {
+    private func getLoopRecursion(manager: _CommandReadableManager<Content>, printPrompt: Bool) -> Content {
         Terminal.bell()
-        return getLoop(manager)
+        return getLoop(manager, printPrompt: printPrompt)
     }
     
     func readUserInput(configuration: _ReadUserInputConfiguration) -> String? {
@@ -92,13 +94,17 @@ extension CommandReadable {
     /// The core. The function recursively called to prompt user for input.
     ///
     /// Useless you want to customize the get loop, use the default implementation.
-    func getLoop(_ manager: _CommandReadableManager<Content>) -> Content {
+    func getLoop(_ manager: _CommandReadableManager<Content>, printPrompt: Bool = true) -> Content {
         let currentPosition = Terminal.cursor.currentPosition().line
-        DefaultInterface.default.print(manager.prompt, terminator: "")
-        let linesCount = Terminal.cursor.currentPosition().line - currentPosition
+        
+        if printPrompt {
+            DefaultInterface.default.print(manager.prompt, terminator: "")
+        }
+        
+        let afterPromptPosition = Terminal.cursor.currentPosition()
         
         guard let input = self.readUserInput(configuration: .default) else {
-            return getLoopRecursion(manager: manager)
+            return getLoopRecursion(manager: manager, printPrompt: true)
         }
         
         do {
@@ -118,19 +124,16 @@ extension CommandReadable {
             } else {
                 errorDescription = (error as NSError).localizedDescription
             }
-            DefaultInterface.default.print("\(errorDescription, modifier: .foregroundColor(.red))")
             
-            Terminal.cursor.moveUp(line: errorDescription.count(where: { $0.isNewline }) + 2)
-            Terminal.clearLine()
+            // restore state
+            Terminal.cursor.moveTo(line: afterPromptPosition.line, column: afterPromptPosition.column)
+            Terminal.eraseFromCursorToEndOfScreen()
             
-            if linesCount != 0 {
-                for _ in 0..<linesCount {
-                    Terminal.cursor.moveUp(line: 1)
-                    Terminal.clearLine()
-                }
-            }
+            DefaultInterface.default.print("\n\(errorDescription, modifier: .foregroundColor(.red))")
             
-            return getLoopRecursion(manager: manager)
+            Terminal.cursor.moveTo(line: afterPromptPosition.line, column: afterPromptPosition.column)
+            
+            return getLoopRecursion(manager: manager, printPrompt: false)
         }
     }
     
