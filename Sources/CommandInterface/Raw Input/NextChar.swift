@@ -27,9 +27,9 @@ public enum NextChar: Equatable {
     /// You need to ensure the Terminal is in raw mode by ``Terminal/setRawMode()``
     ///
     /// - Note: You need to `fflush` to push output.
-    public static func consumeNext() -> NextChar? {
+    public static func consumeNext() throws -> NextChar? {
         let inputHandle = FileHandle.standardInput
-        guard let next = try? inputHandle.read(upToCount: 1), let char = next.first else { return nil }
+        guard let next = try inputHandle.read(upToCount: 1), let char = next.first else { return nil }
         
         switch char {
         case 27: // escape char

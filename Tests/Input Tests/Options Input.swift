@@ -29,8 +29,8 @@ struct OptionsInput {
     ) throws {
         let handle = try withStandardOutputCaptured {
             simulateUserInput(input + terminator)
-            let string = Terminal.defaultInterface.read(.options(["option 10000", "option 20000", "option 30000"]), prompt: "")
-            Terminal.defaultInterface.print(">>>\(string)", terminator: "")
+            let string = try Terminal.read(.options(["option 10000", "option 20000", "option 30000"]), prompt: "")
+            Terminal.print(">>>\(string)", terminator: "")
         }
         
         let string = try String(data: handle.readToEnd()!, encoding: .utf8)

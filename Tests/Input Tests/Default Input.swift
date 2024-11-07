@@ -29,8 +29,8 @@ struct DefaultValueInput {
     ) throws {
         let handle = try withStandardOutputCaptured {
             simulateUserInput(input + terminator)
-            let string = Terminal.defaultInterface.read(.string.default("abc"), prompt: "")
-            Terminal.defaultInterface.print(">>>\(string)", terminator: "")
+            let string = try Terminal.read(.string.default("abc"), prompt: "")
+            Terminal.print(">>>\(string)", terminator: "")
         }
         
         let string = try String(data: handle.readToEnd()!, encoding: .utf8)

@@ -23,8 +23,8 @@ struct InputTests {
     @Test func stringInput() throws {
         let handle = try withStandardOutputCaptured {
             simulateUserInput("hello!\n")
-            let string = Terminal.defaultInterface.read(.string, prompt: "String here: ")
-            Terminal.defaultInterface.print(">>>\(string)", terminator: "")
+            let string = try Terminal.read(.string, prompt: "String here: ")
+            Terminal.print(">>>\(string)", terminator: "")
         }
         
         let string = try String(data: handle.readToEnd()!, encoding: .utf8)
@@ -35,7 +35,7 @@ struct InputTests {
     @Test func fileInput() throws {
         _ = try withStandardOutputCaptured {
             simulateUserInput("/Users/vaida/DataBase/Static/Do\\ not\\ modify.txt \n")
-            let file = Terminal.defaultInterface.read(.finderItem, prompt: "file here: ")
+            let file = try Terminal.read(.finderItem, prompt: "file here: ")
             
             let match = FinderItem(at: "/Users/vaida/DataBase/Static/Do not modify.txt")
             #expect(file == match)
@@ -45,8 +45,8 @@ struct InputTests {
     @Test func stoppedInput() async throws {
         let handle = try withStandardOutputCaptured {
             simulateUserInput("?")
-            let string = Terminal.defaultInterface.read(.string.default("abcd").stopSequence(/\?/), prompt: "read: ")
-            Terminal.defaultInterface.print(">>>\(string)", terminator: "")
+            let string = try Terminal.read(.string.default("abcd").stopSequence(/\?/), prompt: "read: ")
+            Terminal.print(">>>\(string)", terminator: "")
         }
         
         let string = try String(data: handle.readToEnd()!, encoding: .utf8)
@@ -57,8 +57,8 @@ struct InputTests {
     @Test func transformedInput() async throws {
         let handle = try withStandardOutputCaptured {
             simulateUserInput("\n")
-            let string = Terminal.defaultInterface.read(.bool.default(true), prompt: "")
-            Terminal.defaultInterface.print(">>>\(string)", terminator: "")
+            let string = try Terminal.read(.bool.default(true), prompt: "")
+            Terminal.print(">>>\(string)", terminator: "")
         }
         
         let string = try String(data: handle.readToEnd()!, encoding: .utf8)

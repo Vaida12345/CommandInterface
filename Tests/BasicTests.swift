@@ -21,7 +21,7 @@ struct BasicTests {
     
     @Test func output() throws {
         let handle = try withStandardOutputCaptured {
-            Terminal.defaultInterface.print("abcd", terminator: "")
+            Terminal.print("abcd", terminator: "")
         }
         
         let string = try String(data: handle.readToEnd()!, encoding: .utf8)

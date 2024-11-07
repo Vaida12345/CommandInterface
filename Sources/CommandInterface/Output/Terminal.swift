@@ -131,10 +131,6 @@ public struct Terminal {
         self.originalTerminal = nil
     }
     
-    static var defaultInterface: DefaultInterface {
-        .default
-    }
-    
     /// The size of current Terminal window.
     @inlinable
     public static func windowSize() -> (width: Int, height: Int)? {
@@ -168,47 +164,6 @@ public struct Terminal {
         let contents = item.description
         Swift.print(contents, terminator: terminator)
         fflush(stdout)
-    }
-    
-    /// Reads a value from stdin.
-    ///
-    /// Use this the way you use `SwiftUI` views and modifiers. for example,
-    ///
-    /// ```swift
-    /// let value = read(.double, prompt: "Enter a value",
-    ///                  default: 3.14) { $0 > 0 }
-    /// ```
-    ///
-    /// ## Condition Modifier
-    /// Sets the condition that must meet for the read content considered succeed.
-    ///
-    /// In this example, the given text file must contain "Hello".
-    /// ```swift
-    /// self.read(.textFile, prompt: "Enter a path for text file") { content in
-    ///     content.contains("Hello")
-    /// }
-    /// ```
-    ///
-    /// You can also provide the reason for failure using `throw`.
-    /// ```swift
-    /// self.read(.textFile, prompt: "Enter a path for text file") { content in
-    ///     guard content.contains("Hello") else {
-    ///         throw ReadError(reason: "Source not contain \"Hello\"")
-    ///     }
-    ///     return true
-    /// }
-    /// ```
-    ///
-    /// - Parameters:
-    ///   - contentType: The content type for reading. See ``CommandReadable``.
-    ///   - prompt: The prompt shown to the user.
-    ///   - condition: The condition that will be matched against.
-    public static func read<T>(
-        _ contentType: T,
-        prompt: CommandPrintManager.Interpolation,
-        condition: ((_ content: T.Content) throws -> Bool)? = nil
-    ) -> T.Content where T: CommandReadable {
-        contentType.getLoop(_CommandReadableManager(prompt: prompt, condition: condition))
     }
     
 }

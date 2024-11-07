@@ -17,20 +17,40 @@ public final class CommandReadableDefaultableGeneric<Content>: CommandReadableGe
         Self(transform: self.transform, condition: self.condition, formatter: self.formatter, defaultValue: defaultValue)
     }
     
-    public override func readUserInput(configuration: _ReadUserInputConfiguration) -> String? {
-        let defaultValue = formatter(defaultValue)
-        var storage = StandardInputStorage()
+    init(
+        transform: @escaping (_: String) throws -> Content?,
+        condition: @escaping (_: Content) throws -> Bool,
+        formatter: @escaping (_: Content) -> String,
+        defaultValue: Content
+    ) {
+        self.defaultValue = defaultValue
         
-        var autocompleteLength = storage.write(formatted: "\(defaultValue, modifier: .dim)")
-        storage.move(to: .left, length: autocompleteLength)
+        super.init(transform: transform, condition: condition, formatter: formatter)
+    }
+    
+    public override func makeInputReader(_configuration: CommandInputReader._Configuration) -> InputReader {
+        InputReader(formatter: formatter, defaultValue: defaultValue, _configuration: _configuration)
+    }
+    
+    
+    public final class InputReader: CommandInputReader {
         
-        while let next = NextChar.consumeNext() {
+        let defaultValue: String
+        
+        var autocompleteLength: Int
+        
+        
+        init(formatter: @escaping (_: Content) -> String, defaultValue: Content, _configuration: _Configuration) {
+            self.defaultValue = formatter(defaultValue)
+            
+            self.autocompleteLength = storage.write(formatted: "\(defaultValue, modifier: .dim)")
+            storage.move(to: .left, length: autocompleteLength)
+            
+            super.init(configuration: _configuration)
+        }
+        
+        public override func handle(_ next: NextChar) throws -> String? {
             switch next {
-            case .newline:
-                Swift.print("\n", terminator: "")
-                fflush(stdout)
-                return storage.get()
-                
             case .right:
                 if storage.cursor < storage.count - autocompleteLength {
                     storage.handle(next)
@@ -76,27 +96,12 @@ public final class CommandReadableDefaultableGeneric<Content>: CommandReadableGe
                 storage.write(char)
                 
             default:
-                storage.handle(next)
+                return try super.handle(next)
             }
             
-            let string = storage.get()
-            if configuration.stopSequence.contains(where: { (try? $0.wholeMatch(in: string)) != nil }) {
-                return string
-            }
+            return nil
         }
         
-        return nil
-    }
-    
-    init(
-        transform: @escaping (_: String) throws -> Content?,
-        condition: @escaping (_: Content) throws -> Bool,
-        formatter: @escaping (_: Content) -> String,
-        defaultValue: Content
-    ) {
-        self.defaultValue = defaultValue
-        
-        super.init(transform: transform, condition: condition, formatter: formatter)
     }
     
 }

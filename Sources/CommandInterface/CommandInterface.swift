@@ -34,14 +34,6 @@ public protocol CommandInterface {
 }
 
 
-struct DefaultInterface: CommandInterface {
-    
-    static var `default`: DefaultInterface {
-        DefaultInterface()
-    }
-    
-}
-
 public extension CommandInterface {
     
     /// Link to the interface for interacting with stdout.
@@ -108,8 +100,8 @@ public extension CommandInterface {
         _ contentType: T,
         prompt: CommandPrintManager.Interpolation,
         condition: ((_ content: T.Content) throws -> Bool)? = nil
-    ) -> T.Content where T: CommandReadable {
-        Terminal.read(contentType, prompt: prompt, condition: condition)
+    ) throws -> T.Content where T: CommandReadable {
+        try Terminal.read(contentType, prompt: prompt, condition: condition)
     }
     
     

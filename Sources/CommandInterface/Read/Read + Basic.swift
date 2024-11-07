@@ -30,10 +30,9 @@ public class CommandReadableGeneric<Content>: CommandReadableDefaultable {
         formatter(content)
     }
     
-    public func readUserInput(configuration: _ReadUserInputConfiguration) -> String? {
-        _defaultReadUserInput(configuration: configuration)
+    public func makeInputReader(_configuration: CommandInputReader._Configuration) -> CommandInputReader {
+        CommandInputReader(configuration: _configuration)
     }
-    
     
     public static func transform(
         transform: @escaping (_ input: String) throws -> Content?,
@@ -58,6 +57,8 @@ public class CommandReadableGeneric<Content>: CommandReadableDefaultable {
     public func `default`(_ defaultValue: Content) -> CommandReadableDefaultableGeneric<Content> {
         CommandReadableDefaultableGeneric(transform: self.transform, condition: self.condition, formatter: self.formatter, defaultValue: defaultValue)
     }
+    
+    public typealias InputReader = CommandInputReader
     
 }
 

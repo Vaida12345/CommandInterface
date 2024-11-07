@@ -21,7 +21,7 @@ struct OutputTests {
     
     @Test func withColorVariations() throws {
         let handle = try withStandardOutputCaptured {
-            Terminal.defaultInterface.print("\("blue", modifier: .foregroundColor(.blue))", terminator: "")
+            Terminal.print("\("blue", modifier: .foregroundColor(.blue))", terminator: "")
         }
         
         let string = try String(data: handle.readToEnd()!, encoding: .utf8)
@@ -30,7 +30,7 @@ struct OutputTests {
     
     @Test func markdownEnabled() throws {
         let handle = try withStandardOutputCaptured {
-            Terminal.defaultInterface.print("**Hello** *Swift*", terminator: "")
+            Terminal.print("**Hello** *Swift*", terminator: "")
         }
         
         let string = try String(data: handle.readToEnd()!, encoding: .utf8)
