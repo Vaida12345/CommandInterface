@@ -26,8 +26,8 @@ public struct CommandReadableStopable<Base>: CommandReadable where Base: Command
         base.formatter(content: content)
     }
     
-    public func readUserInput(configuration: _ReadUserInputConfiguration) -> String? {
-        base.readUserInput(configuration: _ReadUserInputConfiguration(stopSequence: self.stopSequence))
+    public func makeInputReader(configuration: CommandInputReader.Configuration) -> Base.InputReader {
+        base.makeInputReader(configuration: CommandInputReader.Configuration(stopSequence: stopSequence))
     }
     
     public typealias Content = Base.Content

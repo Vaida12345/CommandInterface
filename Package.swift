@@ -12,14 +12,14 @@ let package = Package (
         .library(name: "CommandInterface", targets: ["CommandInterface"]),
     ],
     dependencies: [
-        .package(name: "Stratum", path: "/Users/vaida/Library/Mobile Documents/com~apple~CloudDocs/DataBase/Projects/Packages/Stratum"),
+        .package(url: "https://github.com/Vaida12345/FinderItem", from: "1.0.0"),
         .package(url: "https://github.com/apple/swift-argument-parser", from: "1.3.0")
     ],
     targets: [
         .target(
             name: "CommandInterface",
             dependencies: [
-                "Stratum",
+                "FinderItem",
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
                 "CICComponent"
             ],
@@ -27,7 +27,7 @@ let package = Package (
         ),
         .testTarget(
             name: "Tests",
-            dependencies: ["CommandInterface", "Stratum"],
+            dependencies: ["CommandInterface", "FinderItem"],
             path: "Tests",
             swiftSettings: [.unsafeFlags(["-enable-bare-slash-regex"])]
         ),
@@ -36,7 +36,7 @@ let package = Package (
             name: "Client",
             dependencies: [
                 "CommandInterface",
-                "Stratum",
+                "FinderItem",
                 .product(name: "ArgumentParser", package: "swift-argument-parser")
             ],
             path: "Client",

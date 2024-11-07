@@ -13,12 +13,21 @@ import OSLog
 
 /// The protocol whose conforming types serve as entry points.
 ///
-/// To use `read`, always set
+/// To declare the main entrance, please declare the command as `ParsableCommand` or `AsyncParsableCommand`.
+///
 /// ```swift
-/// Terminal.setRawMode()
+/// @main
+/// public struct Command: CommandInterface, AsyncParsableCommand {
+///
+///     public mutating func run() async throws {
+///         Terminal.setRawMode(); defer { Terminal.reset() }
+///
+///         ...
+///     }
+/// }
 /// ```
 ///
-/// To declare the main entrance, please declare the command as `ParsableCommand` or `AsyncParsableCommand`.
+/// The first line sets terminal to raw mode, and is required.
 ///
 /// ## Topics
 ///

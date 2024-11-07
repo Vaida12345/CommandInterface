@@ -5,7 +5,7 @@
 //  Created by Vaida on 8/19/24.
 //
 
-import Stratum
+import FinderItem
 
 
 /// Generic readable content.
@@ -30,8 +30,8 @@ public class CommandReadableGeneric<Content>: CommandReadableDefaultable {
         formatter(content)
     }
     
-    public func makeInputReader(_configuration: CommandInputReader._Configuration) -> CommandInputReader {
-        CommandInputReader(configuration: _configuration)
+    public func makeInputReader(configuration: CommandInputReader.Configuration) -> CommandInputReader {
+        CommandInputReader(configuration: configuration)
     }
     
     public static func transform(

@@ -7,7 +7,7 @@
 //
 
 import Foundation
-import Stratum
+import FinderItem
 
 
 /// The error with a reason for the failure of reading.

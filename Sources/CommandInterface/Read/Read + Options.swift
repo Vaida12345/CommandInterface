@@ -23,11 +23,23 @@ public struct CommandReadableOptions: CommandReadable {
         !bounded || options.contains(content)
     }
     
-    public func readUserInput(configuration: _ReadUserInputConfiguration) -> String? {
-        var storage = StandardInputStorage()
+    public func makeInputReader(configuration: CommandInputReader.Configuration) -> InputReader {
+        InputReader(options: self.options, bounded: self.bounded, configuration: configuration)
+    }
+    
+    public typealias Content = String
+    
+    public final class InputReader: CommandInputReader {
+        
+        let options: [String]
+        
+        let bounded: Bool
+        
+        
         var override = true // override for default
         
         var rotate = 0
+        
         func rotateUp() {
             rotate += options.count - 1
             rotate = rotate % options.count
@@ -50,7 +62,16 @@ public struct CommandReadableOptions: CommandReadable {
         var lastInput: NextChar? = nil
         var __buffer: String = ""
         
-        while let key = NextChar.consumeNext() {
+        
+        init(options: [String], bounded: Bool, configuration: Configuration) {
+            self.options = options
+            self.bounded = bounded
+            
+            super.init(configuration: configuration)
+        }
+        
+        
+        public override func handle(_ key: NextChar) throws -> String? {
             switch key {
             case .up: // Up arrow, rotate
                 rotateUp()
@@ -73,15 +94,11 @@ public struct CommandReadableOptions: CommandReadable {
                 } else {
                     rotateMatchingDown()
                 }
-                guard !matching.isEmpty else { continue }
+                guard !matching.isEmpty else { return nil }
                 let match = matching[matchingRotate]
                 storage.clearEntered()
                 
                 storage.insertAtCursor(match)
-            case .newline: // Enter key
-                print("\n", terminator: "")
-                
-                return storage.get()
             case .delete: // Backspace key
                 storage.deleteBeforeCursor()
             case .char(let value): // Other characters
@@ -97,23 +114,19 @@ public struct CommandReadableOptions: CommandReadable {
                     storage.insertAtCursor(value)
                 }
             default:
-                storage.handle(key)
+                return try super.handle(key)
             }
             
+            return nil
+        }
+        
+        public override func didHandle(nextChar key: NextChar) -> String? {
             fflush(stdout);
             lastInput = key
             
-            let string = storage.get()
-            if configuration.stopSequence.contains(where: { (try? $0.wholeMatch(in: string)) != nil }) {
-                return string
-            }
+            return super.didHandle(nextChar: key)
         }
-        
-        return nil
     }
-    
-    
-    public typealias Content = String
     
 }
 
@@ -146,11 +159,17 @@ extension CommandReadable where Self == CommandReadableOptions {
 
 public struct CommandReadableOptionsRawRepresentable<Content>: CommandReadable where Content: RawRepresentable, Content.RawValue == String {
     
+    public func makeInputReader(configuration: CommandInputReader.Configuration) -> CommandReadableOptions.InputReader {
+        optionsReader.makeInputReader(configuration: configuration)
+    }
+    
     let optionsReader: CommandReadableOptions
     
     public func transform(input: String) throws -> Content? {
         Content(rawValue: input)
     }
+    
+    public typealias InputReader = CommandReadableOptions.InputReader
     
 }
 

@@ -7,7 +7,7 @@
 //
 
 import Foundation
-import Stratum
+import FinderItem
 import SwiftUI
 import OSLog
 
@@ -144,7 +144,7 @@ extension CommandPrintManager {
                     case .secondary: modifier.formUnion(.dim)
                     case .gray:      modifier.formUnion(.dim)
                     default:
-                        let vector = foregroundColor.animatableData
+                        let vector = foregroundColor.components
                         modifier.formUnion(.foregroundColor(.rgb(UInt8(vector[0] * 256), UInt8(vector[1] * 256), UInt8(vector[2] * 256))))
                     }
                 }
@@ -160,7 +160,7 @@ extension CommandPrintManager {
                     case .white:     modifier.formUnion(.backgroundColor(.white))
                     case .primary:   modifier.formUnion(.backgroundColor(.black))
                     default:
-                        let vector = backgroundColor.animatableData
+                        let vector = backgroundColor.components
                         modifier.formUnion(.backgroundColor(.rgb(UInt8(vector[0] * 256), UInt8(vector[1] * 256), UInt8(vector[2] * 256))))
                     }
                 }
@@ -185,6 +185,22 @@ extension CommandPrintManager {
             
         }
         
+    }
+    
+}
+
+
+extension Color {
+    
+    @inlinable
+    public var components: [Double] {
+#if canImport(AppKit) && !targetEnvironment(macCatalyst)
+        let color = NSColor(self).usingColorSpace(.sRGB)!
+        return [color.redComponent, color.greenComponent, color.blueComponent, color.alphaComponent]
+#elseif canImport(UIKit)
+        let color = UIColor(self).cgColor.converted(to: CGColorSpace(name: CGColorSpace.displayP3)!, intent: .defaultIntent, options: nil)!
+        return color.components!.map { Double($0) } + [color.alpha]
+#endif
     }
     
 }

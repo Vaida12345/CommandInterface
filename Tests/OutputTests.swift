@@ -5,10 +5,11 @@
 //  Created by Vaida on 8/19/24.
 //
 
-import Stratum
+import FinderItem
 @testable
 import CommandInterface
 import Testing
+import Essentials
 
 
 extension Tag {

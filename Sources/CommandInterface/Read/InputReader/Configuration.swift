@@ -7,11 +7,11 @@
 
 extension CommandInputReader {
     
-    public struct _Configuration {
+    public struct Configuration {
         
         internal let stopSequence: [Regex<Substring>]
         
-        static let `default` = _Configuration(stopSequence: [])
+        static let `default` = Configuration(stopSequence: [])
         
     }
 

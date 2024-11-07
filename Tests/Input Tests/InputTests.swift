@@ -6,10 +6,11 @@
 //
 
 import Foundation
-import Stratum
+import FinderItem
 @testable
 import CommandInterface
 import Testing
+import Essentials
 
 
 extension Tag {

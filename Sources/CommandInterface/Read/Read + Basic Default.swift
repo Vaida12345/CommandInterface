@@ -28,8 +28,8 @@ public final class CommandReadableDefaultableGeneric<Content>: CommandReadableGe
         super.init(transform: transform, condition: condition, formatter: formatter)
     }
     
-    public override func makeInputReader(_configuration: CommandInputReader._Configuration) -> InputReader {
-        InputReader(formatter: formatter, defaultValue: defaultValue, _configuration: _configuration)
+    public override func makeInputReader(configuration: CommandInputReader.Configuration) -> InputReader {
+        InputReader(formatter: formatter, defaultValue: defaultValue, configuration: configuration)
     }
     
     
@@ -40,13 +40,15 @@ public final class CommandReadableDefaultableGeneric<Content>: CommandReadableGe
         var autocompleteLength: Int
         
         
-        init(formatter: @escaping (_: Content) -> String, defaultValue: Content, _configuration: _Configuration) {
+        init(formatter: @escaping (_: Content) -> String, defaultValue: Content, configuration: Configuration) {
             self.defaultValue = formatter(defaultValue)
+            self.autocompleteLength = 0 // dummpy value
             
-            self.autocompleteLength = storage.write(formatted: "\(defaultValue, modifier: .dim)")
+            var storage = StandardInputStorage()
+            self.autocompleteLength = storage.write(formatted: "\(self.defaultValue, modifier: .dim)")
             storage.move(to: .left, length: autocompleteLength)
             
-            super.init(configuration: _configuration)
+            super.init(configuration: configuration, storage: storage)
         }
         
         public override func handle(_ next: NextChar) throws -> String? {

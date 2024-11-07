@@ -29,7 +29,7 @@ public protocol CommandReadable {
     /// Makes an input reader that reads from stdin.
     ///
     /// Useless you want to customize the get loop, use the default implementation.
-    func makeInputReader(_configuration: CommandInputReader._Configuration) -> InputReader
+    func makeInputReader(configuration: CommandInputReader.Configuration) -> InputReader
     
     
     associatedtype Content
@@ -49,8 +49,8 @@ public extension CommandReadable {
         true
     }
     
-    func makeInputReader(_configuration: CommandInputReader._Configuration) -> InputReader where InputReader == CommandInputReader {
-        CommandInputReader(configuration: _configuration)
+    func makeInputReader(configuration: CommandInputReader.Configuration) -> InputReader where InputReader == CommandInputReader {
+        CommandInputReader(configuration: configuration)
     }
     
 }

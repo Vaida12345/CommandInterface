@@ -159,6 +159,8 @@ public struct Terminal {
     ///
     /// print("The sum is \(string).")
     /// ```
+    ///
+    /// - Tip: With the support of `AttributedString`, you can also write texts in markdown, the same way you would write `Text` in `SwiftUI`.
     @inlinable
     public static func print(_ item: CommandPrintManager.Interpolation, terminator: String = "\n") {
         let contents = item.description

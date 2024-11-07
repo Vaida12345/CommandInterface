@@ -6,17 +6,17 @@
 //
 
 import Foundation
-import Stratum
+import FinderItem
 
 
 public class CommandInputReader {
     
-    let configuration: _Configuration
+    let configuration: Configuration
     
     var storage: StandardInputStorage
     
     
-    init(configuration: _Configuration, storage: StandardInputStorage = StandardInputStorage()) {
+    init(configuration: Configuration, storage: StandardInputStorage = StandardInputStorage()) {
         self.configuration = configuration
         self.storage = storage
     }
@@ -43,10 +43,10 @@ public class CommandInputReader {
         return nil
     }
     
-    /// Called in ``read()`` after ``handle(_:)``.
+    /// Called in `read()` after ``handle(_:)``.
     ///
     /// - Returns: A valid string when wishes to early return.
-    public func didHandleNextChar() -> String? {
+    public func didHandle(nextChar: NextChar) -> String? {
         let string = storage.get()
         if configuration.stopSequence.contains(where: { (try? $0.wholeMatch(in: string)) != nil }) {
             return string
@@ -62,7 +62,7 @@ public class CommandInputReader {
                 return string
             }
             
-            if let string = didHandleNextChar() {
+            if let string = didHandle(nextChar: next) {
                 return string
             }
         }

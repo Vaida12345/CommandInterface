@@ -58,15 +58,21 @@ extension Terminal {
         condition: ((_ content: T.Content) throws -> Bool)?,
         printPrompt: Bool = true
     ) throws -> T.Content where T: CommandReadable {
-        let currentPosition = Terminal.cursor.currentPosition().line
-        
         if printPrompt {
             Terminal.print(prompt, terminator: "")
         }
         
-        let afterPromptPosition = Terminal.cursor.currentPosition()
+#if DEBUG
+        // if under test env, disable position checking, as Xcode Terminal does not support position reading.
+        let afterPromptPosition: (line: Int, column: Int)
+        if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil {
+            afterPromptPosition = (0, 0)
+        } else {
+            afterPromptPosition = Terminal.cursor.currentPosition()
+        }
+#endif
         
-        guard let input = try contentType.makeInputReader(_configuration: .default).read() else {
+        guard let input = try contentType.makeInputReader(configuration: .default).read() else {
             Terminal.bell()
             return try getLoop(of: contentType, prompt: prompt, condition: condition, printPrompt: false)
         }
