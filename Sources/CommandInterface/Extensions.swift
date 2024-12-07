@@ -11,7 +11,7 @@ import ArgumentParser
 
 extension FinderItem: @retroactive ExpressibleByArgument {
     
-    public convenience init?(argument: String) {
+    public init?(argument: String) {
         self.init(at: FinderItem.normalize(shellPath: argument))
     }
     
