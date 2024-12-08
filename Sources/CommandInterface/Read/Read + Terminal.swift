@@ -62,13 +62,11 @@ extension Terminal {
             Terminal.print(prompt, terminator: "")
         }
         
+        var afterPromptPosition: (line: Int, column: Int) = Terminal.cursor.currentPosition()
 #if DEBUG
         // if under test env, disable position checking, as Xcode Terminal does not support position reading.
-        let afterPromptPosition: (line: Int, column: Int)
         if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil {
             afterPromptPosition = (0, 0)
-        } else {
-            afterPromptPosition = Terminal.cursor.currentPosition()
         }
 #endif
         
