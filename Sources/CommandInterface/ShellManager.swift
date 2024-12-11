@@ -9,6 +9,7 @@
 #if os(macOS)
 import Foundation
 import FinderItem
+import Essentials
 
 
 /// A convenient interface to run shell.

@@ -71,7 +71,7 @@ public struct Cursor {
             "\u{1B}["
             
             Capture {
-                /\d+/
+                OneOrMore(.digit)
             } transform: {
                 Int($0)!
             }
@@ -79,7 +79,7 @@ public struct Cursor {
             ";"
             
             Capture {
-                /\d+/
+                OneOrMore(.digit)
             } transform: {
                 Int($0)!
             }
