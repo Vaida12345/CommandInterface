@@ -11,7 +11,9 @@ extension CommandInputReader {
         
         internal let stopSequence: [Regex<Substring>]
         
-        static let `default` = Configuration(stopSequence: [])
+        static var `default`: Configuration {
+            Configuration(stopSequence: [])
+        }
         
     }
 

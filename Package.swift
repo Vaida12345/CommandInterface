@@ -39,6 +39,5 @@ let package = Package (
             ],
             path: "Client"
         )
-    ],
-    swiftLanguageModes: [.v5]
+    ]
 )
