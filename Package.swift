@@ -12,8 +12,8 @@ let package = Package (
         .library(name: "CommandInterface", targets: ["CommandInterface"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/Vaida12345/FinderItem", from: "1.0.0"),
-        .package(url: "https://github.com/apple/swift-argument-parser", from: "1.5.0")
+        .package(url: "https://www.github.com/Vaida12345/FinderItem", from: "1.0.0"),
+        .package(url: "https://www.github.com/apple/swift-argument-parser", from: "1.5.0")
     ],
     targets: [
         .target(
