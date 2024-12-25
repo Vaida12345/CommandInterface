@@ -57,8 +57,8 @@ import Essentials
 ///
 /// ### Dealing with `stdin`
 ///
-/// - ``write(_:)-1dmmo``
-/// - ``write(_:)-1jjbc``
+/// - ``write(_:)-4uo92``
+/// - ``write(_:)-4tpa2``
 ///
 ///
 /// ### Control the execution
