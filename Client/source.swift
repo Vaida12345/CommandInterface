@@ -7,18 +7,19 @@ import FinderItem
 
 
 @main
-struct Command: CommandInterface, ParsableCommand {
+struct Command: CommandInterface, AsyncParsableCommand {
     
-    mutating func run() throws {
-        Terminal.setRawMode()
+    mutating func run() async throws {
+        let manager = ShellManager()
+        try manager.run(arguments: "geckodriver --port 4444")
         
-        let hello = "Hello!"
-        print("\(hello, modifier: .italic.underline().foregroundColor(.blue))")
+        for try await line in manager.lines() {
+            Swift.print(line)
+        }
+        
+        manager.wait()
+        
+        Swift.print(manager.error() ?? "")
     }
     
-}
-
-
-enum Model: String, CaseIterable {
-     case a
 }
