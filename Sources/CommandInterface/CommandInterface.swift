@@ -68,8 +68,17 @@ public extension CommandInterface {
     ///
     /// print("The sum is \(string).")
     /// ```
+    @inlinable
     func print(_ item: CommandPrintManager.Interpolation, terminator: String = "\n") {
         Terminal.print(item, terminator: terminator)
+    }
+    
+    /// Print anything using default Swift print.
+    @inlinable
+    @_disfavoredOverload
+    func print(_ contents: Any..., separator: String = " ", terminator: String = "\n") {
+        Swift.print(contents, separator: separator, terminator: terminator)
+        fflush(stdout)
     }
     
     /// Reads a value from stdin.
@@ -105,6 +114,7 @@ public extension CommandInterface {
     ///   - contentType: The content type for reading. See ``CommandReadable``.
     ///   - prompt: The prompt shown to the user.
     ///   - condition: The condition that will be matched against.
+    @inlinable
     func read<T>(
         _ contentType: T,
         prompt: CommandPrintManager.Interpolation,

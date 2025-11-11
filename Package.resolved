@@ -1,5 +1,5 @@
 {
-  "originHash" : "b366aedaf233cde14aa458276261d6041d31f1944b9da071c6462faef15ea021",
+  "originHash" : "2d70f25b5997384e4520ec76f250fc3e5986f157a571cd176ada0f827407dfe8",
   "pins" : [
     {
       "identity" : "essentials",
@@ -13,7 +13,7 @@
     {
       "identity" : "finderitem",
       "kind" : "remoteSourceControl",
-      "location" : "https://www.github.com/Vaida12345/FinderItem",
+      "location" : "https://github.com/Vaida12345/FinderItem.git",
       "state" : {
         "revision" : "19c1bd2ae89418a96ce57464a0ae9875014a086d",
         "version" : "1.0.4"
@@ -22,7 +22,7 @@
     {
       "identity" : "swift-argument-parser",
       "kind" : "remoteSourceControl",
-      "location" : "https://www.github.com/apple/swift-argument-parser",
+      "location" : "https://github.com/apple/swift-argument-parser.git",
       "state" : {
         "revision" : "41982a3656a71c768319979febd796c6fd111d5c",
         "version" : "1.5.0"
