@@ -12,7 +12,7 @@ let package = Package (
         .library(name: "CommandInterface", targets: ["CommandInterface"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/Vaida12345/FinderItem.git", from: "1.0.0"),
+        .package(url: "https://github.com/Vaida12345/FinderItem.git", from: "2.0.1"),
         .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.5.0")
     ],
     targets: [

@@ -102,6 +102,17 @@ extension CommandReadable where Self == CommandReadableGeneric<String> {
     
 }
 
+extension CommandReadable where Self == CommandReadableGeneric<Int> {
+    
+    /// Indicates reading `String` from a text file as indicated by the input path.
+    public static var int: CommandReadableGeneric<Int> {
+        .transform { input in
+            return Int(input)
+        }
+    }
+    
+}
+
 extension CommandReadable where Self == CommandReadableGeneric<FinderItem> {
     
     /// Indicates reading a file path that forms a FinderItem.
