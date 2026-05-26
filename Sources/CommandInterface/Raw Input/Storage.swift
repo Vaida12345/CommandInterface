@@ -113,7 +113,7 @@ public struct StandardInputStorage {
         var shift = 0
         for _ in 1...count {
             if cursor < self.buffer.count {
-                let dis = min(buffer[cursor - 1 + shift].utf8.count, 2)
+                let dis = min(buffer[cursor + shift].utf8.count, 2)
                 num += dis
                 shift += 1
             }

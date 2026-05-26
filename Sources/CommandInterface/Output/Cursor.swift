@@ -87,7 +87,9 @@ public struct Cursor {
             "R"
         }
         
-        let match = try! regex.wholeMatch(in: buffer)!
+        guard let match = try? regex.wholeMatch(in: buffer) else {
+            return (0, 0)
+        }
         return (match.output.1, match.output.2)
     }
     
@@ -101,23 +103,25 @@ public struct Cursor {
     /// Move up, and to the beginning of the line.
     @inlinable
     public static func moveUp(line: Int) {
-        if line < 0 {
+        guard line >= 0 else {
             self.moveDown(line: abs(line))
-        } else if line > 0 {
-            print("\(escape)[\(line)F", terminator: "")
-            fflush(stdout);
+            return
         }
+        guard line > 0 else { return }
+        print("\(escape)[\(line)F", terminator: "")
+        fflush(stdout);
     }
-    
-    // Move up, and to the beginning of the line.
+
+    /// Move down, and to the beginning of the line.
     @inlinable
     public static func moveDown(line: Int) {
-        if line < 0 {
+        guard line >= 0 else {
             self.moveUp(line: abs(line))
-        } else if line > 0 {
-            print("\(escape)[\(line)E", terminator: "")
-            fflush(stdout);
+            return
         }
+        guard line > 0 else { return }
+        print("\(escape)[\(line)E", terminator: "")
+        fflush(stdout);
     }
     
 }

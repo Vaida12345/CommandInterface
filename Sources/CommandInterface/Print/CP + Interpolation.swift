@@ -145,7 +145,7 @@ extension CommandPrintManager {
                     case .gray:      modifier.formUnion(.dim)
                     default:
                         let vector = foregroundColor.components
-                        modifier.formUnion(.foregroundColor(.rgb(UInt8(vector[0] * 256), UInt8(vector[1] * 256), UInt8(vector[2] * 256))))
+                        modifier.formUnion(.foregroundColor(.rgb(UInt8(vector[0] * 255), UInt8(vector[1] * 255), UInt8(vector[2] * 255))))
                     }
                 }
                 
@@ -161,7 +161,7 @@ extension CommandPrintManager {
                     case .primary:   modifier.formUnion(.backgroundColor(.black))
                     default:
                         let vector = backgroundColor.components
-                        modifier.formUnion(.backgroundColor(.rgb(UInt8(vector[0] * 256), UInt8(vector[1] * 256), UInt8(vector[2] * 256))))
+                        modifier.formUnion(.backgroundColor(.rgb(UInt8(vector[0] * 255), UInt8(vector[1] * 255), UInt8(vector[2] * 255))))
                     }
                 }
                 

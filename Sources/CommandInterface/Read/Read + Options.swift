@@ -52,7 +52,7 @@ public struct CommandReadableOptions: CommandReadable {
         
         var matchingRotate = 0
         var matching: [String] {
-            options.filter { $0.hasPrefix(String(__buffer)) }
+            options.filter { $0.hasPrefix(String(tabBuffer)) }
         }
         func rotateMatchingDown() {
             matchingRotate += 1
@@ -60,7 +60,7 @@ public struct CommandReadableOptions: CommandReadable {
         }
         
         var lastInput: NextChar? = nil
-        var __buffer: String = ""
+        var tabBuffer: String = ""
         
         
         init(options: [String], bounded: Bool, configuration: Configuration) {
@@ -90,7 +90,7 @@ public struct CommandReadableOptions: CommandReadable {
                 storage.insertAtCursor(options[rotate])
             case .tab: // Tab key
                 if lastInput != .tab {
-                    __buffer = storage.get()
+                    tabBuffer = storage.get()
                 } else {
                     rotateMatchingDown()
                 }

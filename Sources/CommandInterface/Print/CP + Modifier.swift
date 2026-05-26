@@ -69,7 +69,7 @@ extension CommandPrintManager {
         public static let strikethrough = Modifier(rawValue: 1 << 9)
         
         /// The default modifier, without any style.
-        public static let `default`     = Modifier(rawValue: 0 << 0)
+        public static let `default`     = Modifier(rawValue: 0)
         
         
         /// The bold modifier.

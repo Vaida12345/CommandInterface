@@ -34,12 +34,16 @@ struct InputTests {
     }
     
     @Test func fileInput() throws {
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try Data("test".utf8).write(to: tempURL)
+        let tempFile = FinderItem(at: tempURL)
+        defer { try? tempFile.remove() }
+
         _ = try withStandardOutputCaptured {
-            simulateUserInput("/Users/vaida/DataBase/Static/Do\\ not\\ modify.txt \n")
+            simulateUserInput(tempFile.path + "\n")
             let file = try Terminal.read(.finderItem, prompt: "file here: ")
-            
-            let match = FinderItem(at: "/Users/vaida/DataBase/Static/Do not modify.txt")
-            #expect(file == match)
+
+            #expect(file == tempFile)
         }
     }
     
@@ -80,9 +84,7 @@ func simulateUserInput(_ input: String) {
     let inputData = input.data(using: .utf8)!
     pipe.fileHandleForWriting.write(inputData)
     pipe.fileHandleForWriting.closeFile()
-    
-    // Redirect stdin to use the pipe's read end
-    freopen("/dev/null", "r", stdin) // Close the current stdin
+
     dup2(pipe.fileHandleForReading.fileDescriptor, STDIN_FILENO)
 }
 

@@ -19,7 +19,7 @@ public struct CommandPrintManager {
     @inlinable
     @discardableResult 
     public func flush() -> Bool {
-        fflush(stdout) != 0
+        fflush(stdout) == 0
     }
     
 }

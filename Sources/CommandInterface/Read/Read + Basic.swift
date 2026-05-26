@@ -113,6 +113,28 @@ extension CommandReadable where Self == CommandReadableGeneric<Int> {
     
 }
 
+extension CommandReadable where Self == CommandReadableGeneric<Double> {
+
+    /// Indicates reading a double value.
+    public static var double: CommandReadableGeneric<Double> {
+        .transform { input in
+            return Double(input)
+        }
+    }
+
+}
+
+extension CommandReadable where Self == CommandReadableGeneric<Float> {
+
+    /// Indicates reading a float value.
+    public static var float: CommandReadableGeneric<Float> {
+        .transform { input in
+            return Float(input)
+        }
+    }
+
+}
+
 extension CommandReadable where Self == CommandReadableGeneric<FinderItem> {
     
     /// Indicates reading a file path that forms a FinderItem.
